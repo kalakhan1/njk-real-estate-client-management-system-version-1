@@ -1,0 +1,50 @@
+{
+  "name": "herbal-master-factory-gas",
+  "version": "2.1.1",
+  "description": "Google Apps Script Client Manager for Herbal Master Factory — client records, services tracking, WhatsApp messaging, user roles, and multi-field search.",
+  "keywords": [
+    "google-apps-script",
+    "clasp",
+    "client-manager",
+    "crm",
+    "google-sheets",
+    "whatsapp"
+  ],
+  "author": {
+    "name": "Herbal Master Factory",
+    "email": "YOUR_EMAIL@example.com"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_GITHUB_USERNAME/herbal-master-factory-gas.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YOUR_GITHUB_USERNAME/herbal-master-factory-gas/issues"
+  },
+  "homepage": "https://github.com/YOUR_GITHUB_USERNAME/herbal-master-factory-gas#readme",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "login": "clasp login",
+    "logout": "clasp logout",
+    "status": "clasp status",
+    "pull": "clasp pull",
+    "push": "clasp push",
+    "push:force": "clasp push -f",
+    "watch": "clasp push -w",
+    "open": "clasp open",
+    "open:webapp": "clasp open --webapp",
+    "deploy": "clasp deploy",
+    "deployments": "clasp deployments",
+    "logs": "clasp logs",
+    "logs:watch": "clasp logs --watch",
+    "version:new": "clasp version"
+  },
+  "devDependencies": {
+    "@types/google-apps-script": "^1.0.83",
+    "@google/clasp": "^2.4.2"
+  }
+}

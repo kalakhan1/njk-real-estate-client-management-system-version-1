@@ -1,0 +1,76 @@
+# ============================================================
+# Sensitive Credentials — NEVER COMMIT
+# ============================================================
+.clasprc.json
+.clasprc.json.*
+.clasp.json
+.env
+.env.local
+.env.*.local
+
+# ============================================================
+# Google Apps Script — Deployment Artifacts
+# ============================================================
+# (clasp pull generates these, but we usually track them)
+# Uncomment next line if you don't want version history for scripts
+# *.js.map
+
+# ============================================================
+# Node.js Dependencies
+# ============================================================
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ============================================================
+# Logs
+# ============================================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ============================================================
+# Operating System Files
+# ============================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ============================================================
+# IDE / Editor
+# ============================================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ============================================================
+# Build / Dist
+# ============================================================
+dist/
+build/
+out/
+*.tgz
+
+# ============================================================
+# Temporary Files
+# ============================================================
+*.tmp
+*.bak
+*.old
+.cache/

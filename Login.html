@@ -1,0 +1,54 @@
+<!--
+  NJK Real Estate — Client Manager (v2.0)
+  File: Login.html
+  Section: 20.x — Login Screen
+  Version: 2.0.0
+-->
+
+<!-- ============================================================
+     SECTION 20.1 — LOGIN SCREEN CONTAINER
+     ============================================================ -->
+<div class="login-screen" id="loginScreen">
+
+  <!-- 20.2 — Login Card -->
+  <div class="login-card">
+
+    <!-- 20.2.1 — Brand -->
+    <div class="login-brand">
+      <div class="login-brand-logo" id="loginLogo">NJK</div>
+      <h1 id="loginCompanyName">NJK Real Estate</h1>
+      <p id="loginTagline">Your Trusted Property Partner</p>
+    </div>
+
+    <!-- 20.2.2 — Form -->
+    <form class="login-form" id="loginForm" onsubmit="submitLogin(event)">
+
+      <div class="form-group">
+        <label class="form-label" for="loginUsername">Username</label>
+        <input type="text" class="form-control" id="loginUsername"
+               name="username" placeholder="admin" autocomplete="username"
+               required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="loginPassword">Password</label>
+        <input type="password" class="form-control" id="loginPassword"
+               name="password" placeholder="••••••••" autocomplete="current-password"
+               required>
+      </div>
+
+      <button type="submit" class="btn-login" id="loginBtn">
+        <i class="bi bi-box-arrow-in-right"></i> <span>Login</span>
+      </button>
+
+    </form>
+
+    <!-- 20.2.3 — Footer -->
+    <div class="login-footer">
+      <span id="loginFooterText">NJK Real Estate — Client Manager</span>
+      <br>v<span id="loginVersion">2.0.0</span>
+    </div>
+
+  </div>
+
+</div>

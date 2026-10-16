@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NJK Real Estate — Client Manager</title>
+  <?!= include('Styles'); ?>
+</head>
+
+<body>
+
+<?!= include('Login'); ?>
+
+<div class="app-wrapper" id="appWrapper" style="display:none;">
+
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="brand" onclick="navigate('dashboard')">
+        <div class="brand-logo" id="brandLogo">NJK</div>
+        <div class="brand-text">
+          <h1 id="brandName">NJK Real Estate</h1>
+          <p id="brandTagline">Your Trusted Property Partner</p>
+        </div>
+      </div>
+
+      <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">
+        <i class="bi bi-list"></i>
+      </button>
+
+      <nav class="app-nav" id="appNav">
+        <button class="nav-btn" data-nav="dashboard" onclick="navigate('dashboard')">
+          <i class="bi bi-grid"></i> <span data-i18n="nav.dashboard">Dashboard</span>
+        </button>
+        <button class="nav-btn" data-nav="add-client" onclick="navigate('add-client')">
+          <i class="bi bi-person-plus"></i> <span data-i18n="nav.addClient">Naya Client</span>
+        </button>
+        <button class="nav-btn" data-nav="search" onclick="navigate('search')">
+          <i class="bi bi-search"></i> <span data-i18n="nav.search">Talash</span>
+        </button>
+        <button class="nav-btn" data-nav="settings" id="navSettingsBtn"
+                onclick="navigate('settings')" style="display:none;">
+          <i class="bi bi-gear"></i> <span data-i18n="nav.settings">Settings</span>
+        </button>
+        <button class="nav-btn" data-nav="users" id="navUsersBtn"
+                onclick="navigate('users')" style="display:none;">
+          <i class="bi bi-people"></i> <span data-i18n="nav.users">Users</span>
+        </button>
+        <button class="nav-btn" data-nav="help" onclick="navigate('help')">
+          <i class="bi bi-question-circle"></i> <span data-i18n="nav.help">Madad</span>
+        </button>
+      </nav>
+
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="user-chip" id="userChip">
+          <div class="user-chip-avatar" id="userAvatar">A</div>
+          <div class="user-chip-info">
+            <span class="user-chip-name" id="userName">—</span>
+            <span class="user-chip-role" id="userRole">—</span>
+          </div>
+        </div>
+        <button class="btn-logout" onclick="logoutUser()" data-i18n-title="btn.logout" title="Logout">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+
+    <!-- ============================================================
+         DASHBOARD
+         ============================================================ -->
+    <section id="view-dashboard" class="view">
+
+      <h1 class="page-title" data-i18n="dash.title">Dashboard</h1>
+      <p class="page-subtitle" data-i18n="dash.subtitle">Aapke saare clients ek jagah</p>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label"><i class="bi bi-people"></i> <span data-i18n="dash.total">Total</span></div>
+          <div class="stat-value" id="statTotal">—</div>
+        </div>
+        <div class="stat-card active-client">
+          <div class="stat-label"><i class="bi bi-check-circle"></i> <span data-i18n="dash.active">Active</span></div>
+          <div class="stat-value" id="statActive">—</div>
+        </div>
+        <div class="stat-card inactive-client">
+          <div class="stat-label"><i class="bi bi-pause-circle"></i> <span data-i18n="dash.inactive">Inactive</span></div>
+          <div class="stat-value" id="statInactive">—</div>
+        </div>
+        <div class="stat-card working-client">
+          <div class="stat-label"><i class="bi bi-briefcase"></i> <span data-i18n="dash.working">Working</span></div>
+          <div class="stat-value" id="statWorking">—</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" id="searchInput"
+                 data-i18n-ph="ph.dashSearch"
+                 placeholder="Naam, phone ya area..."
+                 oninput="filterClients()">
+        </div>
+        <button class="btn btn-primary" onclick="navigate('add-client')">
+          <i class="bi bi-plus-lg"></i> <span data-i18n="btn.newClient">Naya Client</span>
+        </button>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="all" onclick="switchTab('all')">
+          <i class="bi bi-list-ul"></i> <span data-i18n="dash.tabAll">Sab</span>
+          <span class="tab-count" id="countAll">0</span>
+        </button>
+        <button class="tab-btn" data-tab="active" onclick="switchTab('active')">
+          <i class="bi bi-check-circle"></i> <span data-i18n="dash.tabActive">Active</span>
+          <span class="tab-count" id="countActive">0</span>
+        </button>
+        <button class="tab-btn" data-tab="inactive" onclick="switchTab('inactive')">
+          <i class="bi bi-pause-circle"></i> <span data-i18n="dash.tabInactive">Inactive</span>
+          <span class="tab-count" id="countInactive">0</span>
+        </button>
+        <button class="tab-btn" data-tab="working" onclick="switchTab('working')">
+          <i class="bi bi-briefcase"></i> <span data-i18n="dash.tabWorking">Current Working</span>
+          <span class="tab-count" id="countWorking">0</span>
+        </button>
+      </div>
+
+      <div id="clientsList" class="client-list">
+        <div class="loading"><div class="spinner"></div><span data-i18n="msg.loadingClients">Clients load ho rahe hain...</span></div>
+      </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         ADD CLIENT
+         ============================================================ -->
+    <section id="view-add-client" class="view">
+
+      <h1 class="page-title" data-i18n="add.title">Naya Client</h1>
+      <p class="page-subtitle" data-i18n="add.subtitle">Naya client add karein</p>
+
+      <div class="card">
+        <h3 class="card-title">
+          <i class="bi bi-person-plus"></i> <span data-i18n="add.formTitle">Client ki Maloomat</span>
+        </h3>
+
+        <form id="addClientForm" onsubmit="submitAddClient(event)">
+          <div class="form-grid">
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.name">Naam <span class="req">*</span></label>
+              <input type="text" class="form-control" name="name"
+                     data-i18n-ph="ph.name" placeholder="Ahmed Khan" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.phone">Phone / WhatsApp <span class="req">*</span></label>
+              <input type="tel" class="form-control" name="phone"
+                     data-i18n-ph="ph.phone" placeholder="0300-1234567" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.email">Email</label>
+              <input type="email" class="form-control" name="email"
+                     data-i18n-ph="ph.email" placeholder="client@example.com">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.dealType">Deal Type</label>
+              <select class="form-control" name="dealType">
+                <option value="Not Set" data-i18n="opt.notSet">Not Set</option>
+                <option value="Rent" data-i18n="opt.rent">Rent</option>
+                <option value="Sale" data-i18n="opt.sale">Sale</option>
+                <option value="Both" data-i18n="opt.both">Both</option>
+              </select>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label" data-i18n="lbl.area">Requirement Area</label>
+              <input type="text" class="form-control" name="area"
+                     data-i18n-ph="ph.area" placeholder="DHA Phase 5, Gulshan Block 6...">
+              <span class="form-help" data-i18n="help.area">Client kis area me property chahta hai</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.areaSize">Area Size</label>
+              <input type="number" class="form-control" name="areaSize"
+                     data-i18n-ph="ph.areaSize" placeholder="1000" min="0" step="any">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.areaUnit">Unit</label>
+              <select class="form-control" name="areaUnit">
+                <option value="sqft" data-i18n="unit.sqft">sqft</option>
+                <option value="sqyds" data-i18n="unit.sqyds">sqyds</option>
+                <option value="sqmtr" data-i18n="unit.sqmtr">sqmtr</option>
+                <option value="acres" data-i18n="unit.acres">acres</option>
+              </select>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label" data-i18n="lbl.requirement">Requirement Details</label>
+              <textarea class="form-control" name="requirement"
+                        data-i18n-ph="ph.requirement"
+                        placeholder="3-bed apartment, parking zaroori, budget 1.5 crore..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.initialStatus">Initial Status</label>
+              <select class="form-control" name="status">
+                <option value="Active" data-i18n="opt.active">Active</option>
+                <option value="Inactive" data-i18n="opt.inactive">Inactive</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check-lg"></i> <span data-i18n="btn.save">Save Karein</span>
+            </button>
+            <button type="button" class="btn btn-outline" onclick="resetAddForm()">
+              <i class="bi bi-arrow-counterclockwise"></i> <span data-i18n="btn.reset">Reset</span>
+            </button>
+            <button type="button" class="btn btn-outline" onclick="navigate('dashboard')">
+              <i class="bi bi-x-lg"></i> <span data-i18n="btn.cancel">Cancel</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         CLIENT DETAIL
+         ============================================================ -->
+    <section id="view-client-detail" class="view">
+
+      <button class="btn btn-outline btn-sm" onclick="navigate('dashboard')" style="margin-bottom:14px;">
+        <i class="bi bi-arrow-left"></i> <span data-i18n="btn.back">Wapas Dashboard</span>
+      </button>
+
+      <div class="card">
+        <div class="detail-header">
+          <div class="detail-header-info">
+            <h2 id="detailName">—</h2>
+            <div class="detail-header-meta">
+              <span><i class="bi bi-telephone"></i> <span id="detailPhone">—</span></span>
+              <span id="detailStatusBadge"></span>
+              <span id="detailDealBadge"></span>
+              <span><i class="bi bi-hash"></i> <span id="detailId">—</span></span>
+            </div>
+          </div>
+          <div class="detail-header-actions">
+
+            <div class="wa-dropdown">
+              <button class="btn btn-whatsapp" onclick="toggleWaMenu(event, 'detailWaMenu')">
+                <i class="bi bi-whatsapp"></i> WhatsApp
+                <i class="bi bi-chevron-down" style="font-size:11px;"></i>
+              </button>
+              <div class="wa-menu" id="detailWaMenu">
+                <button class="wa-menu-item" onclick="sendWhatsApp('welcomeRoman')">
+                  <i class="bi bi-envelope-heart"></i> Welcome — Roman Urdu
+                </button>
+                <button class="wa-menu-item" onclick="sendWhatsApp('welcomeEnglish')">
+                  <i class="bi bi-envelope-heart"></i> Welcome — English
+                </button>
+                <div class="wa-menu-divider"></div>
+                <button class="wa-menu-item" onclick="sendWhatsApp('reminderRoman')">
+                  <i class="bi bi-bell"></i> Reminder — Roman Urdu
+                </button>
+                <button class="wa-menu-item" onclick="sendWhatsApp('reminderEnglish')">
+                  <i class="bi bi-bell"></i> Reminder — English
+                </button>
+                <div class="wa-menu-divider"></div>
+                <button class="wa-menu-item wa-blank" onclick="sendWhatsApp('blank')">
+                  <i class="bi bi-chat-dots"></i> Blank Message
+                </button>
+              </div>
+            </div>
+
+            <button class="btn btn-outline" id="detailDeleteBtn"
+                    onclick="confirmDeleteClient()" style="display:none;">
+              <i class="bi bi-trash"></i>
+            </button>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title"><i class="bi bi-pencil-square"></i> <span data-i18n="det.editTitle">Client ki Tafseel</span></h3>
+        <form id="editClientForm" onsubmit="submitEditClient(event)">
+          <div class="form-grid">
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.name">Naam *</label>
+              <input type="text" class="form-control" name="name"
+                     data-i18n-ph="ph.name" placeholder="Ahmed Khan" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.phone">Phone *</label>
+              <input type="tel" class="form-control" name="phone"
+                     data-i18n-ph="ph.phone" placeholder="0300-1234567" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.email">Email</label>
+              <input type="email" class="form-control" name="email"
+                     data-i18n-ph="ph.email" placeholder="client@example.com">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.dealType">Deal Type</label>
+              <select class="form-control" name="dealType">
+                <option value="Not Set" data-i18n="opt.notSet">Not Set</option>
+                <option value="Rent" data-i18n="opt.rent">Rent</option>
+                <option value="Sale" data-i18n="opt.sale">Sale</option>
+                <option value="Both" data-i18n="opt.both">Both</option>
+              </select>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label" data-i18n="lbl.area">Requirement Area</label>
+              <input type="text" class="form-control" name="area"
+                     data-i18n-ph="ph.area" placeholder="DHA Phase 5, Gulshan...">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.areaSize">Area Size</label>
+              <input type="number" class="form-control" name="areaSize"
+                     data-i18n-ph="ph.areaSize" placeholder="1000" min="0" step="any">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.areaUnit">Unit</label>
+              <select class="form-control" name="areaUnit">
+                <option value="sqft" data-i18n="unit.sqft">sqft</option>
+                <option value="sqyds" data-i18n="unit.sqyds">sqyds</option>
+                <option value="sqmtr" data-i18n="unit.sqmtr">sqmtr</option>
+                <option value="acres" data-i18n="unit.acres">acres</option>
+              </select>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label" data-i18n="lbl.requirement">Requirement</label>
+              <textarea class="form-control" name="requirement"
+                        data-i18n-ph="ph.requirement"
+                        placeholder="3-bed apartment, parking zaroori..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.status">Status</label>
+              <select class="form-control" name="status">
+                <option value="Active" data-i18n="opt.active">Active</option>
+                <option value="Inactive" data-i18n="opt.inactive">Inactive</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="editSubmitBtn">
+              <i class="bi bi-save"></i> <span data-i18n="btn.update">Update Karein</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title"><i class="bi bi-briefcase"></i> <span data-i18n="det.servicesTitle">Di Gayi Services</span></h3>
+
+        <form id="addServiceForm" onsubmit="submitAddService(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.serviceDetail">Service Detail *</label>
+              <input type="text" class="form-control" name="serviceDetail"
+                     data-i18n-ph="ph.serviceDetail" placeholder="3-bed apartment dikhaya" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.location">Location</label>
+              <input type="text" class="form-control" name="location"
+                     data-i18n-ph="ph.location" placeholder="DHA Phase 5">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.date">Date</label>
+              <input type="date" class="form-control" name="serviceDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.notes">Notes</label>
+              <input type="text" class="form-control" name="notes"
+                     data-i18n-ph="ph.notes" placeholder="Client interested...">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-gold">
+              <i class="bi bi-plus-lg"></i> <span data-i18n="btn.addService">Service Add Karein</span>
+            </button>
+          </div>
+        </form>
+
+        <hr style="margin:18px 0;border:none;border-top:1px solid var(--border);">
+
+        <div id="servicesList" class="services-list">
+          <div class="empty-state">
+            <i class="bi bi-briefcase"></i>
+            <h3 data-i18n="empty.noServices">Abhi koi service nahi</h3>
+            <p data-i18n="empty.noServicesHint">Upar wale form se pehli service add karein</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         GLOBAL SEARCH — Professional Filter Panel
+         ============================================================ -->
+    <section id="view-search" class="view">
+
+      <h1 class="page-title" data-i18n="src.title">Talash</h1>
+      <p class="page-subtitle" data-i18n="src.subtitle">Professional filters — clients ko target karein</p>
+
+      <!-- Filter Panel -->
+      <div class="card">
+        <h3 class="card-title"><i class="bi bi-funnel"></i> <span data-i18n="src.filtersTitle">Filters</span></h3>
+
+        <!-- Group 1: Basic -->
+        <h4 class="filter-group-title"><i class="bi bi-person"></i> <span data-i18n="src.groupBasic">Basic Info</span></h4>
+        <div class="search-filters">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.name">Naam</label>
+            <input type="text" class="form-control" id="searchName"
+                   data-i18n-ph="ph.searchName" placeholder="Ahmed" oninput="performSearch()">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.phone">Mobile Number</label>
+            <input type="text" class="form-control" id="searchPhone"
+                   data-i18n-ph="ph.searchPhone" placeholder="0300..." oninput="performSearch()">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.status">Status</label>
+            <select class="form-control" id="searchStatus" onchange="performSearch()">
+              <option value="All" data-i18n="opt.all">All</option>
+              <option value="Active" data-i18n="opt.active">Active</option>
+              <option value="Inactive" data-i18n="opt.inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Group 2: Property -->
+        <h4 class="filter-group-title" style="margin-top:14px;"><i class="bi bi-house"></i> <span data-i18n="src.groupProp">Property Details</span></h4>
+        <div class="search-filters">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.dealType">Deal Type</label>
+            <select class="form-control" id="searchDealType" onchange="performSearch()">
+              <option value="All" data-i18n="opt.all">All</option>
+              <option value="Rent" data-i18n="opt.rent">Rent</option>
+              <option value="Sale" data-i18n="opt.sale">Sale</option>
+              <option value="Both" data-i18n="opt.both">Both</option>
+              <option value="Not Set" data-i18n="opt.notSet">Not Set</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.areaUnit">Area Unit</label>
+            <select class="form-control" id="searchAreaUnit" onchange="performSearch()">
+              <option value="All" data-i18n="opt.all">All</option>
+              <option value="sqft" data-i18n="unit.sqft">sqft</option>
+              <option value="sqyds" data-i18n="unit.sqyds">sqyds</option>
+              <option value="sqmtr" data-i18n="unit.sqmtr">sqmtr</option>
+              <option value="acres" data-i18n="unit.acres">acres</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.requirement">Requirement</label>
+            <input type="text" class="form-control" id="searchRequirement"
+                   data-i18n-ph="ph.searchRequirement" placeholder="3-bed, parking..." oninput="performSearch()">
+          </div>
+        </div>
+
+        <!-- Group 3: Range -->
+        <h4 class="filter-group-title" style="margin-top:14px;"><i class="bi bi-sliders"></i> <span data-i18n="src.groupRange">Area Size Range</span></h4>
+        <div class="search-filters">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.min">Minimum</label>
+            <input type="number" class="form-control" id="searchAreaMin"
+                   data-i18n-ph="ph.areaMin" placeholder="0" min="0" step="any" oninput="performSearch()">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.max">Maximum</label>
+            <input type="number" class="form-control" id="searchAreaMax"
+                   data-i18n-ph="ph.areaMax" placeholder="5000" min="0" step="any" oninput="performSearch()">
+          </div>
+        </div>
+
+        <!-- Group 4: Location -->
+        <h4 class="filter-group-title" style="margin-top:14px;"><i class="bi bi-geo-alt"></i> <span data-i18n="src.groupLoc">Location / Area</span></h4>
+        <div class="search-filters">
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label class="form-label" data-i18n="lbl.area">Area</label>
+            <input type="text" class="form-control" id="searchArea"
+                   data-i18n-ph="ph.searchArea" placeholder="DHA, Gulshan, Bahria..." oninput="performSearch()">
+          </div>
+        </div>
+
+        <div class="form-actions" style="margin-top:16px;">
+          <button class="btn btn-outline btn-sm" onclick="clearSearch()">
+            <i class="bi bi-x-lg"></i> <span data-i18n="btn.clearFilters">Filters Saaf Karein</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="card">
+        <div class="search-results-header">
+          <span class="search-results-count">
+            <span data-i18n="src.resultsLabel">Results:</span>
+            <strong id="searchResultsCount">0</strong>
+          </span>
+        </div>
+
+        <div id="searchResults" class="client-list">
+          <div class="empty-state">
+            <i class="bi bi-search"></i>
+            <h3 data-i18n="empty.searchStart">Upar filter lagayein</h3>
+            <p data-i18n="empty.searchHint">Results yahan dikhengi</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         SETTINGS
+         ============================================================ -->
+    <section id="view-settings" class="view">
+
+      <h1 class="page-title" data-i18n="set.title">Settings</h1>
+      <p class="page-subtitle" data-i18n="set.subtitle">Company details aur preferences</p>
+
+      <div class="card">
+        <h3 class="card-title"><i class="bi bi-building"></i> <span data-i18n="set.companyTitle">Company Identity</span></h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.companyName">Company Name</label>
+            <input type="text" class="form-control" id="setCompanyName"
+                   data-i18n-ph="ph.companyName" placeholder="NJK Real Estate">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.tagline">Tagline</label>
+            <input type="text" class="form-control" id="setTagline"
+                   data-i18n-ph="ph.tagline" placeholder="Your Trusted Property Partner">
+          </div>
+          <div class="form-group full">
+            <label class="form-label" data-i18n="lbl.logoUrl">Logo URL</label>
+            <input type="url" class="form-control" id="setLogoUrl"
+                   data-i18n-ph="ph.logoUrl" placeholder="https://...">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title"><i class="bi bi-telephone"></i> <span data-i18n="set.contactTitle">Contact Details</span></h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.primaryPhone">Primary Phone</label>
+            <input type="text" class="form-control" id="setPrimaryPhone"
+                   data-i18n-ph="ph.primaryPhone" placeholder="+92-300-1234567">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.secondaryPhone">Secondary Phone</label>
+            <input type="text" class="form-control" id="setSecondaryPhone"
+                   data-i18n-ph="ph.secondaryPhone" placeholder="+92-21-1234567">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.email">Email</label>
+            <input type="email" class="form-control" id="setEmail"
+                   data-i18n-ph="ph.email" placeholder="info@example.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.website">Website</label>
+            <input type="text" class="form-control" id="setWebsite"
+                   data-i18n-ph="ph.website" placeholder="www.example.com">
+          </div>
+          <div class="form-group full">
+            <label class="form-label" data-i18n="lbl.officeAddress">Office Address</label>
+            <input type="text" class="form-control" id="setOfficeAddress"
+                   data-i18n-ph="ph.officeAddress" placeholder="Karachi, Pakistan">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title"><i class="bi bi-chat-quote"></i> <span data-i18n="set.templatesTitle">Message Templates</span></h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">
+          Variables: <code>{name}</code> <code>{company}</code>
+          <code>{lastService}</code> <code>{lastLocation}</code> <code>{lastDate}</code>
+        </p>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label class="form-label"><i class="bi bi-envelope-heart"></i> <span data-i18n="set.welcomeRoman">Welcome — Roman Urdu</span></label>
+            <textarea class="form-control" id="setWelcomeTemplateRoman" rows="5"
+                      data-i18n-ph="ph.welcomeTemplate" placeholder="Assalam-o-Alaikum {name}..."></textarea>
+          </div>
+          <div class="form-group full">
+            <label class="form-label"><i class="bi bi-envelope-heart"></i> <span data-i18n="set.welcomeEnglish">Welcome — English</span></label>
+            <textarea class="form-control" id="setWelcomeTemplateEnglish" rows="5"
+                      data-i18n-ph="ph.welcomeTemplateEn" placeholder="Dear {name}..."></textarea>
+          </div>
+          <div class="form-group full">
+            <label class="form-label"><i class="bi bi-bell"></i> <span data-i18n="set.reminderRoman">Reminder — Roman Urdu</span></label>
+            <textarea class="form-control" id="setReminderTemplateRoman" rows="5"
+                      data-i18n-ph="ph.reminderTemplate" placeholder="Assalam-o-Alaikum {name}..."></textarea>
+          </div>
+          <div class="form-group full">
+            <label class="form-label"><i class="bi bi-bell"></i> <span data-i18n="set.reminderEnglish">Reminder — English</span></label>
+            <textarea class="form-control" id="setReminderTemplateEnglish" rows="5"
+                      data-i18n-ph="ph.reminderTemplateEn" placeholder="Dear {name}..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title"><i class="bi bi-sliders"></i> <span data-i18n="set.sysPrefsTitle">System Preferences</span></h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.uiLanguage">UI Language (Global)</label>
+            <select class="form-control" id="setUiLanguage" onchange="onUiLanguageChange(this.value)">
+              <option value="roman" data-i18n="opt.uiRoman">Roman Urdu</option>
+              <option value="english" data-i18n="opt.uiEnglish">English</option>
+            </select>
+            <span class="form-help" data-i18n="help.uiLanguage">Yeh toggle poore UI ke labels + placeholders badal dega</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.countryCode">Default Country Code</label>
+            <input type="text" class="form-control" id="setCountryCode"
+                   data-i18n-ph="ph.countryCode" placeholder="+92">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.dateFormat">Date Format</label>
+            <select class="form-control" id="setDateFormat">
+              <option value="dd-MMM-yyyy">15-Oct-2026</option>
+              <option value="dd/MM/yyyy">15/10/2026</option>
+              <option value="MM/dd/yyyy">10/15/2026</option>
+              <option value="yyyy-MM-dd">2026-10-15</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.sessionHours">Session Hours</label>
+            <input type="number" class="form-control" id="setSessionHours" min="1" max="168"
+                   data-i18n-ph="ph.sessionHours" placeholder="24">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl.maxLoginAttempts">Max Login Attempts</label>
+            <input type="number" class="form-control" id="setMaxLoginAttempts" min="1" max="20"
+                   data-i18n-ph="ph.maxLoginAttempts" placeholder="5">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="form-actions" style="margin-top:0;">
+          <button class="btn btn-success" onclick="saveSettings()">
+            <i class="bi bi-save"></i> <span data-i18n="btn.saveSettings">Save Karein</span>
+          </button>
+          <button class="btn btn-outline" onclick="loadSettings()">
+            <i class="bi bi-arrow-counterclockwise"></i> <span data-i18n="btn.reload">Reload</span>
+          </button>
+          <button class="btn btn-danger" onclick="confirmResetSettings()">
+            <i class="bi bi-exclamation-triangle"></i> <span data-i18n="btn.resetDefaults">Reset to Defaults</span>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         USERS
+         ============================================================ -->
+    <section id="view-users" class="view">
+
+      <h1 class="page-title" data-i18n="usr.title">Users</h1>
+      <p class="page-subtitle" data-i18n="usr.subtitle">Normal aur Custom users manage karein</p>
+
+      <div class="card">
+        <h3 class="card-title"><i class="bi bi-person-plus"></i> <span data-i18n="usr.addTitle">Naya User</span></h3>
+
+        <form id="addUserForm" onsubmit="submitAddUser(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.username">Username *</label>
+              <input type="text" class="form-control" name="username"
+                     data-i18n-ph="ph.username" placeholder="ahmed01" required
+                     pattern="[a-zA-Z0-9_.\-]{3,30}">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.password">Password *</label>
+              <input type="password" class="form-control" name="password"
+                     data-i18n-ph="ph.password" placeholder="min 4 chars" required minlength="4">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.displayName">Display Name</label>
+              <input type="text" class="form-control" name="displayName"
+                     data-i18n-ph="ph.displayName" placeholder="Ahmed Ali">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="lbl.role">Role</label>
+              <select class="form-control" name="role">
+                <option value="Normal" data-i18n="opt.roleNormal">Normal (add only)</option>
+                <option value="Custom" data-i18n="opt.roleCustom">Custom (add + edit + delete)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-plus-lg"></i> <span data-i18n="btn.createUser">User Banayein</span>
+            </button>
+            <button type="button" class="btn btn-outline" onclick="resetAddUserForm()">
+              <i class="bi bi-arrow-counterclockwise"></i> <span data-i18n="btn.reset">Reset</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title"><i class="bi bi-people"></i> <span data-i18n="usr.listTitle">Saare Users</span></h3>
+        <div id="usersList" class="services-list">
+          <div class="loading"><div class="spinner"></div><span data-i18n="msg.loadingUsers">Users load ho rahe hain...</span></div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         HELP
+         ============================================================ -->
+    <section id="view-help" class="view">
+
+      <h1 class="page-title" data-i18n="hlp.title">Madad</h1>
+      <p class="page-subtitle" data-i18n="hlp.subtitle">Quick guide aur FAQ</p>
+
+      <div class="card">
+        <h3 class="card-title"><i class="bi bi-rocket-takeoff"></i> <span data-i18n="hlp.quickStart">Quick Start</span></h3>
+        <ol style="padding-left:20px;font-size:13px;line-height:1.9;">
+          <li data-i18n="hlp.step1">Dashboard par 4 tabs: Sab / Active / Inactive / Current Working</li>
+          <li data-i18n="hlp.step2">Add Client se naya client add karein — Area + Area Size (sqft/sqyds/sqmtr/acres) bharein</li>
+          <li data-i18n="hlp.step3">Client ke naam par click → poori detail</li>
+          <li data-i18n="hlp.step4">Detail page par services add karein</li>
+          <li data-i18n="hlp.step5">Search page par professional filters + Min/Max area size se target karein</li>
+          <li data-i18n="hlp.step6">Settings se UI Language (Roman/English) toggle karein</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title"><i class="bi bi-question-circle"></i> FAQ</h3>
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span data-i18n="faq.q1">Current Working kya hai?</span><i class="bi bi-chevron-down"></i></div>
+          <div class="faq-a" data-i18n="faq.a1">Active clients me toggle ON karne par woh Current Working tab me bhi dikhta hai.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span data-i18n="faq.q2">UI Language toggle kya karta hai?</span><i class="bi bi-chevron-down"></i></div>
+          <div class="faq-a" data-i18n="faq.a2">Poora app UI (nav, labels, placeholders) Roman Urdu ya English me badal jata hai.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-q"><span data-i18n="faq.q3">Area Size range filter kaise use karein?</span><i class="bi bi-chevron-down"></i></div>
+          <div class="faq-a" data-i18n="faq.a3">Search page par Min/Max values dein aur unit (sqft etc) select karein — matching clients filter ho jayenge.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title"><i class="bi bi-info-circle"></i> Version</h3>
+        <p style="font-size:13px;margin:0;">
+          <b>NJK Real Estate — Client Manager</b><br>
+          Version: 2.1.0<br>
+          Build: 2026-10-16<br>
+          Platform: Google Apps Script
+        </p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <span id="footerCompany">NJK Real Estate</span> — Client Manager
+    • v2.1.0
+  </footer>
+
+</div>
+
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <h3 class="modal-title" id="modalTitle">Confirm</h3>
+    <p class="modal-text" id="modalText">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal(false)">
+        <i class="bi bi-x-lg"></i> <span data-i18n="btn.cancel">Cancel</span>
+      </button>
+      <button class="btn btn-danger" id="modalConfirmBtn" onclick="closeModal(true)">
+        <i class="bi bi-check-lg"></i> Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+<?!= include('Scripts'); ?>
+
+</body>
+</html>

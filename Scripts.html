@@ -1,0 +1,1181 @@
+<!--
+  NJK Real Estate — Client Manager (v2.1)
+  File: Scripts.html
+  Section: 50.x — Frontend Logic
+  Version: 2.1.0
+  Change Log:
+ *   2.1.0 — i18n (Roman/English), area size + unit, professional filters
+-->
+
+<script>
+/* ============================================================
+   SECTION 50.0 — GLOBAL STATE
+   ============================================================ */
+const STATE = {
+  token: null, user: null,
+  clients: [], filtered: [],
+  activeTab: 'all', searchQuery: '',
+  currentClient: null,
+  settings: null, publicSettings: null,
+  uiLanguage: 'roman'   // v2.1
+};
+
+const TOKEN_KEY = 'njk_token_v2';
+const PUBLIC_FNS = ['login', 'getPublicSettings', 'getScriptVersion', 'checkSetupStatus'];
+
+/* ============================================================
+   SECTION 51.0 — i18n DICTIONARY (v2.1)
+   ============================================================ */
+const I18N = {
+  // Nav
+  'nav.dashboard':  { roman: 'Dashboard',     english: 'Dashboard' },
+  'nav.addClient':  { roman: 'Naya Client',   english: 'Add Client' },
+  'nav.search':     { roman: 'Talash',        english: 'Search' },
+  'nav.settings':   { roman: 'Settings',      english: 'Settings' },
+  'nav.users':      { roman: 'Users',         english: 'Users' },
+  'nav.help':       { roman: 'Madad',         english: 'Help' },
+
+  // Buttons
+  'btn.newClient':     { roman: 'Naya Client',       english: 'New Client' },
+  'btn.save':          { roman: 'Save Karein',       english: 'Save Client' },
+  'btn.update':        { roman: 'Update Karein',     english: 'Update Details' },
+  'btn.reset':         { roman: 'Reset',             english: 'Reset' },
+  'btn.cancel':        { roman: 'Cancel',            english: 'Cancel' },
+  'btn.logout':        { roman: 'Logout',            english: 'Logout' },
+  'btn.back':          { roman: 'Wapas Dashboard',   english: 'Back to Dashboard' },
+  'btn.addService':    { roman: 'Service Add Karein', english: 'Add Service' },
+  'btn.clearFilters':  { roman: 'Filters Saaf Karein', english: 'Clear Filters' },
+  'btn.saveSettings':  { roman: 'Save Karein',       english: 'Save Settings' },
+  'btn.reload':        { roman: 'Reload',            english: 'Reload' },
+  'btn.resetDefaults': { roman: 'Reset to Defaults', english: 'Reset to Defaults' },
+  'btn.createUser':    { roman: 'User Banayein',     english: 'Create User' },
+
+  // Dashboard
+  'dash.title':     { roman: 'Dashboard',                     english: 'Dashboard' },
+  'dash.subtitle':  { roman: 'Aapke saare clients ek jagah',  english: 'All your clients in one place' },
+  'dash.total':     { roman: 'Total',                         english: 'Total' },
+  'dash.active':    { roman: 'Active',                        english: 'Active' },
+  'dash.inactive':  { roman: 'Inactive',                      english: 'Inactive' },
+  'dash.working':   { roman: 'Working',                       english: 'Working' },
+  'dash.tabAll':    { roman: 'Sab',                           english: 'All' },
+  'dash.tabActive': { roman: 'Active',                        english: 'Active' },
+  'dash.tabInactive': { roman: 'Inactive',                    english: 'Inactive' },
+  'dash.tabWorking':  { roman: 'Current Working',             english: 'Current Working' },
+
+  // Add Client
+  'add.title':     { roman: 'Naya Client',           english: 'Add New Client' },
+  'add.subtitle':  { roman: 'Naya client add karein', english: 'Create a new client' },
+  'add.formTitle': { roman: 'Client ki Maloomat',    english: 'Client Information' },
+
+  // Detail
+  'det.editTitle':     { roman: 'Client ki Tafseel',   english: 'Client Details' },
+  'det.servicesTitle': { roman: 'Di Gayi Services',     english: 'Services Given' },
+
+  // Search
+  'src.title':             { roman: 'Talash',                       english: 'Search' },
+  'src.subtitle':          { roman: 'Professional filters — clients ko target karein', english: 'Professional filters to target clients' },
+  'src.filtersTitle':      { roman: 'Filters',                      english: 'Filters' },
+  'src.groupBasic':        { roman: 'Basic Info',                   english: 'Basic Info' },
+  'src.groupProp':         { roman: 'Property Details',              english: 'Property Details' },
+  'src.groupRange':        { roman: 'Area Size Range',              english: 'Area Size Range' },
+  'src.groupLoc':          { roman: 'Location / Area',              english: 'Location / Area' },
+  'src.resultsLabel':      { roman: 'Results:',                     english: 'Results:' },
+
+  // Settings
+  'set.title':          { roman: 'Settings',                     english: 'Settings' },
+  'set.subtitle':       { roman: 'Company details aur preferences', english: 'Company details and preferences' },
+  'set.companyTitle':   { roman: 'Company Identity',             english: 'Company Identity' },
+  'set.contactTitle':   { roman: 'Contact Details',              english: 'Contact Details' },
+  'set.templatesTitle': { roman: 'Message Templates',            english: 'Message Templates' },
+  'set.welcomeRoman':   { roman: 'Welcome — Roman Urdu',         english: 'Welcome — Roman Urdu' },
+  'set.welcomeEnglish': { roman: 'Welcome — English',            english: 'Welcome — English' },
+  'set.reminderRoman':  { roman: 'Reminder — Roman Urdu',        english: 'Reminder — Roman Urdu' },
+  'set.reminderEnglish':{ roman: 'Reminder — English',           english: 'Reminder — English' },
+  'set.sysPrefsTitle':  { roman: 'System Preferences',           english: 'System Preferences' },
+
+  // Users
+  'usr.title':      { roman: 'Users',                            english: 'Users' },
+  'usr.subtitle':   { roman: 'Normal aur Custom users manage karein', english: 'Manage Normal and Custom users' },
+  'usr.addTitle':   { roman: 'Naya User',                        english: 'Add New User' },
+  'usr.listTitle':  { roman: 'Saare Users',                      english: 'All Users' },
+
+  // Help
+  'hlp.title':      { roman: 'Madad',                            english: 'Help' },
+  'hlp.subtitle':   { roman: 'Quick guide aur FAQ',              english: 'Quick guide and FAQ' },
+  'hlp.quickStart': { roman: 'Quick Start',                      english: 'Quick Start' },
+  'hlp.step1': { roman: 'Dashboard par 4 tabs: Sab / Active / Inactive / Current Working', english: 'Dashboard has 4 tabs: All / Active / Inactive / Current Working' },
+  'hlp.step2': { roman: 'Add Client se client add karein — Area + Area Size bharein', english: 'Use Add Client — fill in Area and Area Size' },
+  'hlp.step3': { roman: 'Client ke naam par click → poori detail', english: 'Click client name → full details' },
+  'hlp.step4': { roman: 'Detail page par services add karein', english: 'Add services on detail page' },
+  'hlp.step5': { roman: 'Search page par Min/Max area size se target karein', english: 'Use Search page with Min/Max area size to target' },
+  'hlp.step6': { roman: 'Settings se UI Language toggle karein', english: 'Toggle UI Language from Settings' },
+
+  // Labels
+  'lbl.name':           { roman: 'Naam',                english: 'Full Name' },
+  'lbl.phone':          { roman: 'Phone / WhatsApp',    english: 'Phone / WhatsApp' },
+  'lbl.email':          { roman: 'Email',               english: 'Email' },
+  'lbl.dealType':       { roman: 'Deal Type',           english: 'Deal Type' },
+  'lbl.area':           { roman: 'Requirement Area',    english: 'Requirement Area' },
+  'lbl.areaSize':       { roman: 'Area Size',           english: 'Area Size' },
+  'lbl.areaUnit':       { roman: 'Unit',                english: 'Unit' },
+  'lbl.requirement':    { roman: 'Requirement Details', english: 'Requirement Details' },
+  'lbl.initialStatus':  { roman: 'Initial Status',      english: 'Initial Status' },
+  'lbl.status':         { roman: 'Status',              english: 'Status' },
+  'lbl.serviceDetail':  { roman: 'Service Detail',      english: 'Service Detail' },
+  'lbl.location':       { roman: 'Location',            english: 'Location' },
+  'lbl.date':           { roman: 'Date',                english: 'Date' },
+  'lbl.notes':          { roman: 'Notes',               english: 'Notes' },
+  'lbl.companyName':    { roman: 'Company Name',        english: 'Company Name' },
+  'lbl.tagline':        { roman: 'Tagline',             english: 'Tagline' },
+  'lbl.logoUrl':        { roman: 'Logo URL',            english: 'Logo URL' },
+  'lbl.primaryPhone':   { roman: 'Primary Phone',       english: 'Primary Phone' },
+  'lbl.secondaryPhone': { roman: 'Secondary Phone',     english: 'Secondary Phone' },
+  'lbl.website':        { roman: 'Website',             english: 'Website' },
+  'lbl.officeAddress':  { roman: 'Office Address',      english: 'Office Address' },
+  'lbl.uiLanguage':     { roman: 'UI Language (Global)', english: 'UI Language (Global)' },
+  'lbl.countryCode':    { roman: 'Default Country Code', english: 'Default Country Code' },
+  'lbl.dateFormat':     { roman: 'Date Format',         english: 'Date Format' },
+  'lbl.sessionHours':   { roman: 'Session Hours',       english: 'Session Hours' },
+  'lbl.maxLoginAttempts': { roman: 'Max Login Attempts', english: 'Max Login Attempts' },
+  'lbl.username':       { roman: 'Username',            english: 'Username' },
+  'lbl.password':       { roman: 'Password',            english: 'Password' },
+  'lbl.displayName':    { roman: 'Display Name',        english: 'Display Name' },
+  'lbl.role':           { roman: 'Role',                english: 'Role' },
+  'lbl.min':            { roman: 'Minimum',             english: 'Minimum' },
+  'lbl.max':            { roman: 'Maximum',             english: 'Maximum' },
+
+  // Options
+  'opt.all':        { roman: 'Sab',              english: 'All' },
+  'opt.active':     { roman: 'Active',           english: 'Active' },
+  'opt.inactive':   { roman: 'Inactive',         english: 'Inactive' },
+  'opt.rent':       { roman: 'Rent',             english: 'Rent' },
+  'opt.sale':       { roman: 'Sale',             english: 'Sale' },
+  'opt.both':       { roman: 'Both',             english: 'Both' },
+  'opt.notSet':     { roman: 'Not Set',          english: 'Not Set' },
+  'opt.roleNormal': { roman: 'Normal (sirf add)', english: 'Normal (add only)' },
+  'opt.roleCustom': { roman: 'Custom (add + edit + delete)', english: 'Custom (add + edit + delete)' },
+  'opt.uiRoman':    { roman: 'Roman Urdu',       english: 'Roman Urdu' },
+  'opt.uiEnglish':  { roman: 'English',          english: 'English' },
+
+  // Units
+  'unit.sqft':  { roman: 'sqft',  english: 'sqft' },
+  'unit.sqyds': { roman: 'sqyds', english: 'sqyds' },
+  'unit.sqmtr': { roman: 'sqmtr', english: 'sqmtr' },
+  'unit.acres': { roman: 'acres', english: 'acres' },
+
+  // Placeholders
+  'ph.name':            { roman: 'Ahmed Khan', english: 'Ahmed Khan' },
+  'ph.phone':           { roman: '0300-1234567', english: '0300-1234567' },
+  'ph.email':           { roman: 'client@example.com', english: 'client@example.com' },
+  'ph.area':            { roman: 'DHA Phase 5, Gulshan Block 6...', english: 'DHA Phase 5, Gulshan Block 6...' },
+  'ph.areaSize':        { roman: '1000', english: '1000' },
+  'ph.requirement':     { roman: '3-bed apartment, parking zaroori, budget 1.5 crore...', english: '3-bed apartment, parking required, budget 1.5 crore...' },
+  'ph.serviceDetail':   { roman: '3-bed apartment dikhaya', english: 'Showed 3-bed apartment' },
+  'ph.location':        { roman: 'DHA Phase 5', english: 'DHA Phase 5' },
+  'ph.notes':           { roman: 'Client interested...', english: 'Client interested...' },
+  'ph.dashSearch':      { roman: 'Naam, phone ya area se dhundhein...', english: 'Search by name, phone or area...' },
+  'ph.searchName':      { roman: 'Ahmed', english: 'Ahmed' },
+  'ph.searchPhone':     { roman: '0300...', english: '0300...' },
+  'ph.searchArea':      { roman: 'DHA, Gulshan, Bahria...', english: 'DHA, Gulshan, Bahria...' },
+  'ph.searchRequirement': { roman: '3-bed, parking...', english: '3-bed, parking...' },
+  'ph.areaMin':         { roman: '0', english: '0' },
+  'ph.areaMax':         { roman: '5000', english: '5000' },
+  'ph.companyName':     { roman: 'NJK Real Estate', english: 'NJK Real Estate' },
+  'ph.tagline':         { roman: 'Your Trusted Property Partner', english: 'Your Trusted Property Partner' },
+  'ph.logoUrl':         { roman: 'https://...', english: 'https://...' },
+  'ph.primaryPhone':    { roman: '+92-300-1234567', english: '+92-300-1234567' },
+  'ph.secondaryPhone':  { roman: '+92-21-1234567', english: '+92-21-1234567' },
+  'ph.website':         { roman: 'www.example.com', english: 'www.example.com' },
+  'ph.officeAddress':   { roman: 'Karachi, Pakistan', english: 'Karachi, Pakistan' },
+  'ph.countryCode':     { roman: '+92', english: '+92' },
+  'ph.sessionHours':    { roman: '24', english: '24' },
+  'ph.maxLoginAttempts':{ roman: '5', english: '5' },
+  'ph.username':        { roman: 'ahmed01', english: 'ahmed01' },
+  'ph.password':        { roman: 'min 4 chars', english: 'min 4 chars' },
+  'ph.displayName':     { roman: 'Ahmed Ali', english: 'Ahmed Ali' },
+  'ph.welcomeTemplate': { roman: 'Assalam-o-Alaikum {name}...', english: 'Dear {name}...' },
+  'ph.welcomeTemplateEn': { roman: 'Dear {name}...', english: 'Dear {name}...' },
+  'ph.reminderTemplate': { roman: 'Assalam-o-Alaikum {name}...', english: 'Dear {name}...' },
+  'ph.reminderTemplateEn': { roman: 'Dear {name}...', english: 'Dear {name}...' },
+
+  // Helpers
+  'help.area':        { roman: 'Client kis area me property chahta hai', english: 'Which area does the client want' },
+  'help.uiLanguage':  { roman: 'Yeh toggle poore UI ke labels + placeholders badal dega', english: 'This toggle switches all UI labels + placeholders' },
+
+  // Empty / Loading
+  'empty.noServices':      { roman: 'Abhi koi service nahi', english: 'No services yet' },
+  'empty.noServicesHint':  { roman: 'Upar wale form se pehli service add karein', english: 'Add the first service from the form above' },
+  'empty.searchStart':     { roman: 'Upar filter lagayein', english: 'Apply filters above' },
+  'empty.searchHint':      { roman: 'Results yahan dikhengi', english: 'Results will appear here' },
+  'empty.noClients':       { roman: 'Abhi koi client nahi', english: 'No clients yet' },
+  'empty.noClientsHint':   { roman: 'Add Client button se naya client add karein', english: 'Click Add Client to create one' },
+  'empty.noMatch':         { roman: 'Koi client match nahi hua', english: 'No matching clients' },
+  'empty.noActive':        { roman: 'Koi active client nahi', english: 'No active clients' },
+  'empty.noInactive':      { roman: 'Koi inactive client nahi', english: 'No inactive clients' },
+  'empty.noWorking':       { roman: 'Koi current working client nahi', english: 'No current-working clients' },
+  'empty.noResults':       { roman: 'Koi result nahi', english: 'No results' },
+  'empty.noResultsHint':   { roman: 'Filters change karke try karein', english: 'Try changing filters' },
+  'msg.loadingClients':    { roman: 'Clients load ho rahe hain...', english: 'Loading clients...' },
+  'msg.loadingUsers':      { roman: 'Users load ho rahe hain...', english: 'Loading users...' },
+  'msg.searching':         { roman: 'Searching...', english: 'Searching...' },
+
+  // FAQ
+  'faq.q1': { roman: 'Current Working kya hai?', english: 'What is Current Working?' },
+  'faq.a1': { roman: 'Active clients me toggle ON karne par woh Current Working tab me bhi dikhta hai.', english: 'When toggled ON for active clients, they also show in Current Working tab.' },
+  'faq.q2': { roman: 'UI Language toggle kya karta hai?', english: 'What does UI Language toggle do?' },
+  'faq.a2': { roman: 'Poora app UI (nav, labels, placeholders) Roman Urdu ya English me badal jata hai.', english: 'The whole UI (nav, labels, placeholders) switches between Roman Urdu and English.' },
+  'faq.q3': { roman: 'Area Size range filter kaise use karein?', english: 'How to use Area Size range filter?' },
+  'faq.a3': { roman: 'Search page par Min/Max values dein aur unit select karein — matching clients filter ho jayenge.', english: 'On Search page enter Min/Max and pick a unit — matching clients filter instantly.' }
+};
+
+// t() — translate a key
+function t(key) {
+  const entry = I18N[key];
+  if (!entry) return key;
+  return entry[STATE.uiLanguage] || entry.roman || key;
+}
+
+// applyTranslations() — walk DOM and replace
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(function (el) {
+    const key = el.getAttribute('data-i18n');
+    // Preserve required-asterisk if present (look for .req child)
+    const hasReq = el.querySelector && el.querySelector('.req');
+    const reqHtml = hasReq ? ' <span class="req">*</span>' : '';
+    el.textContent = t(key);
+    if (reqHtml) el.insertAdjacentHTML('beforeend', reqHtml);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(function (el) {
+    el.placeholder = t(el.getAttribute('data-i18n-ph'));
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(function (el) {
+    el.title = t(el.getAttribute('data-i18n-title'));
+  });
+}
+
+/* ============================================================
+   SECTION 51.5 — API WRAPPER
+   ============================================================ */
+function api(fnName, ...args) {
+  return new Promise((resolve, reject) => {
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      reject(new Error('google.script.run not available')); return;
+    }
+    const runner = google.script.run
+      .withSuccessHandler(res => {
+        if (res && res.ok === false) {
+          const err = res.error || {};
+          if (err.code === 'E_AUTH') {
+            forceLogout('Session expire ho gayi. Dobara login karein.');
+            return reject(new Error(err.message || 'Session expired'));
+          }
+          reject(new Error(err.message || 'Server error'));
+        } else {
+          resolve(res && res.data !== undefined ? res.data : res);
+        }
+      })
+      .withFailureHandler(err => reject(err || new Error('Unknown error')));
+    if (PUBLIC_FNS.indexOf(fnName) !== -1) runner[fnName](...args);
+    else runner[fnName](STATE.token, ...args);
+  });
+}
+
+/* ============================================================
+   SECTION 52.0 — UTILITIES
+   ============================================================ */
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  try {
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return String(d);
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return String(dt.getDate()).padStart(2,'0') + '-' + months[dt.getMonth()] + '-' + dt.getFullYear();
+  } catch (e) { return String(d); }
+}
+function getFormData(formEl) {
+  const data = {};
+  new FormData(formEl).forEach((v, k) => data[k] = String(v).trim());
+  return data;
+}
+function showLoading(containerId, text) {
+  const el = document.getElementById(containerId);
+  if (el) el.innerHTML = '<div class="loading"><div class="spinner"></div>' + (text || t('msg.loadingClients')) + '</div>';
+}
+function hasPermission(perm) {
+  if (!STATE.user) return false;
+  const perms = {
+    'Admin':  ['read','create','update','delete','toggle_status','toggle_working','service_add','service_delete','whatsapp','search','settings','users'],
+    'Normal': ['read','create','service_add','whatsapp','search'],
+    'Custom': ['read','create','update','delete','toggle_status','toggle_working','service_add','service_delete','whatsapp','search']
+  };
+  return (perms[STATE.user.role] || []).indexOf(perm) !== -1;
+}
+function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = (v == null ? '' : v); }
+function getVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+/* ============================================================
+   SECTION 53.0 — TOAST
+   ============================================================ */
+function toast(message, type, duration) {
+  type = type || 'info'; duration = duration || 3000;
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+  const icons = { success:'bi-check-circle-fill', error:'bi-x-circle-fill',
+                  warning:'bi-exclamation-triangle-fill', info:'bi-info-circle-fill' };
+  const el = document.createElement('div');
+  el.className = 'toast-msg ' + type;
+  el.innerHTML = '<i class="bi ' + (icons[type] || icons.info) + '"></i> <span>' + escapeHtml(message) + '</span>';
+  container.appendChild(el);
+  setTimeout(function () {
+    el.style.opacity = '0'; el.style.transform = 'translateX(40px)';
+    setTimeout(function () { el.remove(); }, 250);
+  }, duration);
+}
+
+/* ============================================================
+   SECTION 54.0 — MODAL
+   ============================================================ */
+let _modalResolve = null;
+function showConfirm(title, text, confirmLabel) {
+  return new Promise(function (resolve) {
+    _modalResolve = resolve;
+    document.getElementById('modalTitle').textContent = title || 'Confirm';
+    document.getElementById('modalText').textContent  = text || 'Are you sure?';
+    document.getElementById('modalConfirmBtn').innerHTML =
+      '<i class="bi bi-check-lg"></i> ' + (confirmLabel || 'Confirm');
+    document.getElementById('modalOverlay').classList.add('show');
+  });
+}
+function closeModal(value) {
+  document.getElementById('modalOverlay').classList.remove('show');
+  if (_modalResolve) { const r = _modalResolve; _modalResolve = null; r(value === true); }
+}
+
+/* ============================================================
+   SECTION 55.0 — AUTH
+   ============================================================ */
+async function submitLogin(event) {
+  event.preventDefault();
+  const form = event.target;
+  const username = form.username.value.trim();
+  const password = form.password.value;
+  if (!username || !password) { toast('Username aur password dono zaroori hain', 'warning'); return; }
+  const btn = document.getElementById('loginBtn');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner spinner-inline"></span> Logging in...';
+  try {
+    const res = await api('login', username, password);
+    STATE.token = res.token;
+    STATE.user = { username: res.username, displayName: res.displayName, role: res.role };
+    try { localStorage.setItem(TOKEN_KEY, res.token); } catch (e) {}
+    applyUserToUI(); showApp();
+    toast('Welcome, ' + res.displayName + '!', 'success');
+    if (!window.location.hash || window.location.hash === '#/login') window.location.hash = '#/dashboard';
+    else handleRoute();
+  } catch (err) {
+    toast(err.message || 'Login failed', 'error', 4000);
+    form.password.value = ''; form.password.focus();
+  } finally {
+    btn.disabled = false; btn.innerHTML = orig;
+  }
+}
+
+async function logoutUser() {
+  const ok = await showConfirm('Logout', 'Kya aap logout karna chahte hain?', 'Logout');
+  if (!ok) return;
+  try { await api('logout', STATE.token); } catch (e) {}
+  forceLogout();
+}
+
+function forceLogout(reason) {
+  STATE.token = null; STATE.user = null;
+  STATE.clients = []; STATE.filtered = []; STATE.currentClient = null;
+  try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+  showLogin();
+  if (reason) toast(reason, 'warning', 4000);
+}
+
+async function tryAutoLogin() {
+  let stored = null;
+  try { stored = localStorage.getItem(TOKEN_KEY); } catch (e) {}
+  if (!stored) { showLogin(); return; }
+  STATE.token = stored;
+  try {
+    const user = await api('getCurrentUser');
+    STATE.user = user;
+    applyUserToUI(); showApp(); handleRoute();
+  } catch (err) {
+    try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+    STATE.token = null; showLogin();
+  }
+}
+
+function showLogin() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('appWrapper').style.display = 'none';
+  if (window.location.hash !== '#/login') window.location.hash = '#/login';
+  setTimeout(function () {
+    const el = document.getElementById('loginUsername');
+    if (el) el.focus();
+  }, 100);
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appWrapper').style.display = 'flex';
+  applyRoleVisibility();
+}
+
+function applyUserToUI() {
+  if (!STATE.user) return;
+  const initials = (STATE.user.displayName || STATE.user.username || '?')
+    .split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+  setText('userAvatar', initials);
+  setText('userName', STATE.user.displayName || STATE.user.username);
+  setText('userRole', STATE.user.role);
+}
+
+function applyRoleVisibility() {
+  const setBtn = document.getElementById('navSettingsBtn');
+  const usersBtn = document.getElementById('navUsersBtn');
+  if (setBtn)   setBtn.style.display   = hasPermission('settings') ? 'inline-flex' : 'none';
+  if (usersBtn) usersBtn.style.display = hasPermission('users')    ? 'inline-flex' : 'none';
+}
+
+/* ============================================================
+   SECTION 56.0 — BRANDING
+   ============================================================ */
+function applyPublicBranding(s) {
+  if (!s) return;
+  const name = s.companyName || 'NJK Real Estate';
+  const tagline = s.tagline || '';
+  setText('loginCompanyName', name);
+  setText('loginTagline', tagline);
+  updateLogo('loginLogo', s.logoUrl, name);
+  setText('brandName', name);
+  setText('brandTagline', tagline);
+  updateLogo('brandLogo', s.logoUrl, name);
+  setText('footerCompany', name);
+  document.title = name + ' — Client Manager';
+}
+function updateLogo(id, url, name) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (url) el.innerHTML = '<img src="' + escapeHtml(url) + '" alt="Logo">';
+  else {
+    const initials = (name || 'NJK').split(' ').map(w => w[0]).join('').substring(0, 3).toUpperCase();
+    el.textContent = initials;
+  }
+}
+
+/* ============================================================
+   SECTION 57.0 — ROUTER
+   ============================================================ */
+function navigate(route, param) {
+  let hash = '#/' + route;
+  if (route === 'client' && param) hash = '#/client/' + param;
+  if (window.location.hash === hash) handleRoute();
+  else window.location.hash = hash;
+}
+
+function handleRoute() {
+  if (!STATE.token || !STATE.user) {
+    if (window.location.hash !== '#/login') window.location.hash = '#/login';
+    showLogin(); return;
+  }
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appWrapper').style.display = 'flex';
+
+  const hash = window.location.hash || '#/dashboard';
+  const parts = hash.replace(/^#\//, '').split('/');
+  const route = parts[0] || 'dashboard';
+  const param = parts[1] || null;
+
+  if (route === 'settings' && !hasPermission('settings')) { toast('Settings sirf admin ke liye', 'warning'); return navigate('dashboard'); }
+  if (route === 'users' && !hasPermission('users')) { toast('Users page sirf admin ke liye', 'warning'); return navigate('dashboard'); }
+
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+
+  switch (route) {
+    case 'dashboard':   showView('view-dashboard'); setNavActive('dashboard'); loadDashboard(); break;
+    case 'add-client':  showView('view-add-client'); setNavActive('add-client'); resetAddForm(); break;
+    case 'client':      if (param) { showView('view-client-detail'); setNavActive('dashboard'); loadClientDetail(param); } else navigate('dashboard'); break;
+    case 'search':      showView('view-search'); setNavActive('search'); initSearchPage(); break;
+    case 'settings':    showView('view-settings'); setNavActive('settings'); loadSettings(); break;
+    case 'users':       showView('view-users'); setNavActive('users'); loadUsers(); break;
+    case 'help':        showView('view-help'); setNavActive('help'); break;
+    case 'login':       showLogin(); break;
+    default: navigate('dashboard');
+  }
+  const nav = document.getElementById('appNav');
+  if (nav) nav.classList.remove('show');
+  window.scrollTo(0, 0);
+}
+function showView(id) { const el = document.getElementById(id); if (el) el.classList.add('active'); }
+function setNavActive(name) {
+  document.querySelectorAll('.nav-btn').forEach(function (btn) {
+    btn.classList.toggle('active', btn.dataset.nav === name);
+  });
+}
+function toggleNav() { const n = document.getElementById('appNav'); if (n) n.classList.toggle('show'); }
+
+/* ============================================================
+   SECTION 58.0 — DASHBOARD
+   ============================================================ */
+async function loadDashboard() {
+  showLoading('clientsList', t('msg.loadingClients'));
+  try {
+    const [clients, stats] = await Promise.all([api('getAllClients'), api('getDashboardStats')]);
+    STATE.clients = clients || [];
+    updateStats(stats);
+    applyFiltersAndRender();
+  } catch (err) {
+    document.getElementById('clientsList').innerHTML =
+      '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h3>Error</h3><p>' + escapeHtml(err.message) + '</p></div>';
+  }
+}
+function updateStats(stats) {
+  const s = stats || { total: 0, active: 0, inactive: 0, currentWorking: 0 };
+  setText('statTotal', s.total); setText('statActive', s.active);
+  setText('statInactive', s.inactive); setText('statWorking', s.currentWorking);
+  refreshStatsFromLocal();
+}
+function refreshStatsFromLocal() {
+  const list = STATE.clients || [];
+  const active = list.filter(c => c.status === 'Active').length;
+  const inactive = list.filter(c => c.status === 'Inactive').length;
+  const working = list.filter(c => c.status === 'Active' && c.isCurrentWorking === true).length;
+  setText('countAll', list.length); setText('countActive', active);
+  setText('countInactive', inactive); setText('countWorking', working);
+  setText('statTotal', list.length); setText('statActive', active);
+  setText('statInactive', inactive); setText('statWorking', working);
+}
+function switchTab(tab) {
+  STATE.activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(function (btn) {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  applyFiltersAndRender();
+}
+function filterClients() {
+  const input = document.getElementById('searchInput');
+  STATE.searchQuery = (input && input.value ? input.value : '').toLowerCase().trim();
+  applyFiltersAndRender();
+}
+function applyFiltersAndRender() {
+  let list = (STATE.clients || []).slice();
+  if (STATE.activeTab === 'active') list = list.filter(c => c.status === 'Active');
+  else if (STATE.activeTab === 'inactive') list = list.filter(c => c.status === 'Inactive');
+  else if (STATE.activeTab === 'working') list = list.filter(c => c.status === 'Active' && c.isCurrentWorking === true);
+
+  const q = STATE.searchQuery;
+  if (q) {
+    list = list.filter(c =>
+      (c.name || '').toLowerCase().indexOf(q) !== -1 ||
+      (c.phone || '').toLowerCase().indexOf(q) !== -1 ||
+      (c.email || '').toLowerCase().indexOf(q) !== -1 ||
+      (c.area  || '').toLowerCase().indexOf(q) !== -1);
+  }
+  STATE.filtered = list;
+
+  let emptyMsg = t('empty.noClients');
+  if (STATE.searchQuery) emptyMsg = t('empty.noMatch');
+  else if (STATE.activeTab === 'active') emptyMsg = t('empty.noActive');
+  else if (STATE.activeTab === 'inactive') emptyMsg = t('empty.noInactive');
+  else if (STATE.activeTab === 'working') emptyMsg = t('empty.noWorking');
+
+  renderClientsList('clientsList', list, emptyMsg);
+}
+function renderClientsList(containerId, list, emptyMsg) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!list || list.length === 0) {
+    container.innerHTML =
+      '<div class="empty-state"><i class="bi bi-inbox"></i><h3>' + escapeHtml(emptyMsg) + '</h3>' +
+      '<p>' + t('empty.noClientsHint') + '</p></div>';
+    return;
+  }
+  container.innerHTML = list.map(clientRowHtml).join('');
+}
+
+/* ============================================================
+   SECTION 59.0 — CLIENT ROW HTML
+   ============================================================ */
+function clientRowHtml(c) {
+  const isActive = c.status === 'Active';
+  const isWorking = c.isCurrentWorking === true;
+  const rowClass = 'client-row ' + (isActive ? 'active-client' : 'inactive');
+
+  const dealClassMap = { 'Rent':'deal-rent', 'Sale':'deal-sale', 'Both':'deal-both', 'Not Set':'deal-notset' };
+  const dealClass = dealClassMap[c.dealType] || 'deal-notset';
+  const dealBadge = c.dealType && c.dealType !== 'Not Set'
+    ? '<span class="deal-badge ' + dealClass + '">' + escapeHtml(c.dealType) + '</span>' : '';
+
+  const workingBadge = isWorking
+    ? '<span class="working-badge"><i class="bi bi-briefcase-fill"></i> Working</span>' : '';
+
+  // v2.1 — Area size pill
+  const areaPill = (c.areaSize && parseFloat(c.areaSize) > 0)
+    ? '<span class="deal-badge deal-notset" style="background:#e0f2fe;color:#075985;"><i class="bi bi-rulers"></i> ' +
+      escapeHtml(String(c.areaSize)) + ' ' + escapeHtml(c.areaUnit || 'sqft') + '</span>' : '';
+
+  const canToggleStatus = hasPermission('toggle_status');
+  const canToggleWork   = hasPermission('toggle_working');
+
+  const statusToggle = canToggleStatus
+    ? '<label class="status-toggle"><input type="checkbox" ' + (isActive ? 'checked' : '') +
+      ' onchange="toggleStatus(\'' + escapeHtml(c.clientId) + '\', this)">' +
+      '<span class="status-slider"></span>' +
+      '<span class="status-label">' + (isActive ? 'Active' : 'Inactive') + '</span></label>'
+    : '';
+
+  let workingToggle = '';
+  if (canToggleWork && isActive) {
+    workingToggle = '<label class="working-toggle ' + (isWorking ? 'on' : '') + '">' +
+      '<input type="checkbox" ' + (isWorking ? 'checked' : '') +
+      ' onchange="toggleWorking(\'' + escapeHtml(c.clientId) + '\', this)">' +
+      '<i class="bi bi-briefcase"></i> Working</label>';
+  }
+
+  const waDropdown = '<div class="wa-dropdown">' +
+    '<button class="btn btn-whatsapp btn-sm" onclick="toggleWaMenu(event, \'wa_' + escapeHtml(c.clientId) + '\')">' +
+    '<i class="bi bi-whatsapp"></i> WhatsApp <i class="bi bi-chevron-down" style="font-size:10px;"></i></button>' +
+    '<div class="wa-menu" id="wa_' + escapeHtml(c.clientId) + '">' +
+      '<button class="wa-menu-item" onclick="sendWhatsAppFor(\'' + escapeHtml(c.clientId) + '\', \'welcomeRoman\')"><i class="bi bi-envelope-heart"></i> Welcome — Roman Urdu</button>' +
+      '<button class="wa-menu-item" onclick="sendWhatsAppFor(\'' + escapeHtml(c.clientId) + '\', \'welcomeEnglish\')"><i class="bi bi-envelope-heart"></i> Welcome — English</button>' +
+      '<div class="wa-menu-divider"></div>' +
+      '<button class="wa-menu-item" onclick="sendWhatsAppFor(\'' + escapeHtml(c.clientId) + '\', \'reminderRoman\')"><i class="bi bi-bell"></i> Reminder — Roman Urdu</button>' +
+      '<button class="wa-menu-item" onclick="sendWhatsAppFor(\'' + escapeHtml(c.clientId) + '\', \'reminderEnglish\')"><i class="bi bi-bell"></i> Reminder — English</button>' +
+      '<div class="wa-menu-divider"></div>' +
+      '<button class="wa-menu-item wa-blank" onclick="sendWhatsAppFor(\'' + escapeHtml(c.clientId) + '\', \'blank\')"><i class="bi bi-chat-dots"></i> Blank Message</button>' +
+    '</div></div>';
+
+  return '<div class="' + rowClass + '" data-client-id="' + escapeHtml(c.clientId) + '">' +
+    '<div class="client-info">' +
+      '<span class="client-name" onclick="navigate(\'client\', \'' + escapeHtml(c.clientId) + '\')">' +
+        escapeHtml(c.name) + ' ' + dealBadge + ' ' + workingBadge + ' ' + areaPill +
+        ' <i class="bi bi-arrow-right-circle" style="font-size:12px;color:var(--muted);"></i></span>' +
+      '<div class="client-meta">' +
+        '<span><i class="bi bi-telephone"></i> ' + escapeHtml(c.phone) + '</span>' +
+        (c.email ? '<span><i class="bi bi-envelope"></i> ' + escapeHtml(c.email) + '</span>' : '') +
+        (c.area  ? '<span><i class="bi bi-geo-alt"></i> '  + escapeHtml(c.area)  + '</span>' : '') +
+        '<span><i class="bi bi-hash"></i> ' + escapeHtml(c.clientId) + '</span>' +
+      '</div></div>' +
+    '<div class="client-actions">' + workingToggle + statusToggle + waDropdown + '</div></div>';
+}
+
+/* ============================================================
+   SECTION 60.0 — STATUS TOGGLE
+   ============================================================ */
+async function toggleStatus(clientId, checkboxEl) {
+  checkboxEl.disabled = true;
+  try {
+    const res = await api('toggleClientStatus', clientId);
+    const newStatus = res.status;
+    const c = STATE.clients.find(x => x.clientId === clientId);
+    if (c) { c.status = newStatus; if (newStatus === 'Inactive') c.isCurrentWorking = false; }
+    const label = checkboxEl.parentElement.querySelector('.status-label');
+    if (label) label.textContent = newStatus;
+    const row = checkboxEl.closest('.client-row');
+    if (row) {
+      row.classList.toggle('active-client', newStatus === 'Active');
+      row.classList.toggle('inactive', newStatus === 'Inactive');
+    }
+    refreshStatsFromLocal();
+    if (STATE.activeTab !== 'all') applyFiltersAndRender();
+    toast(clientId + ' → ' + newStatus, 'success', 1800);
+  } catch (err) {
+    checkboxEl.checked = !checkboxEl.checked;
+    toast('Toggle fail: ' + err.message, 'error');
+  } finally { checkboxEl.disabled = false; }
+}
+
+/* ============================================================
+   SECTION 61.0 — WORKING TOGGLE
+   ============================================================ */
+async function toggleWorking(clientId, checkboxEl) {
+  checkboxEl.disabled = true;
+  try {
+    const res = await api('toggleCurrentWorking', clientId);
+    const isOn = res.isCurrentWorking;
+    const c = STATE.clients.find(x => x.clientId === clientId);
+    if (c) c.isCurrentWorking = isOn;
+    const label = checkboxEl.parentElement;
+    if (label) label.classList.toggle('on', isOn);
+    const row = checkboxEl.closest('.client-row');
+    if (row) {
+      const nameEl = row.querySelector('.client-name');
+      if (nameEl) {
+        const badge = nameEl.querySelector('.working-badge');
+        if (isOn && !badge) {
+          const b = document.createElement('span');
+          b.className = 'working-badge';
+          b.innerHTML = '<i class="bi bi-briefcase-fill"></i> Working';
+          nameEl.insertBefore(b, nameEl.querySelector('.bi-arrow-right-circle'));
+        } else if (!isOn && badge) badge.remove();
+      }
+    }
+    refreshStatsFromLocal();
+    if (STATE.activeTab === 'working') applyFiltersAndRender();
+    toast(clientId + ' — Working: ' + (isOn ? 'ON' : 'OFF'), 'success', 1800);
+  } catch (err) {
+    checkboxEl.checked = !checkboxEl.checked;
+    toast(err.message, 'error');
+  } finally { checkboxEl.disabled = false; }
+}
+
+/* ============================================================
+   SECTION 62.0 — WHATSAPP
+   ============================================================ */
+function toggleWaMenu(event, menuId) {
+  if (event) event.stopPropagation();
+  document.querySelectorAll('.wa-menu.show').forEach(function (m) {
+    if (m.id !== menuId) m.classList.remove('show');
+  });
+  const menu = document.getElementById(menuId);
+  if (menu) menu.classList.toggle('show');
+}
+document.addEventListener('click', function () {
+  document.querySelectorAll('.wa-menu.show').forEach(function (m) { m.classList.remove('show'); });
+});
+async function sendWhatsAppFor(clientId, type) {
+  document.querySelectorAll('.wa-menu.show').forEach(function (m) { m.classList.remove('show'); });
+  await sendWhatsAppCommon(clientId, type);
+}
+async function sendWhatsApp(type) {
+  if (!STATE.currentClient) return;
+  await sendWhatsAppCommon(STATE.currentClient.clientId, type);
+}
+async function sendWhatsAppCommon(clientId, type) {
+  const typeMap = { welcomeRoman:'WelcomeRoman', welcomeEnglish:'WelcomeEnglish',
+                    reminderRoman:'ReminderRoman', reminderEnglish:'ReminderEnglish', blank:'Blank' };
+  const serverType = typeMap[type] || 'WelcomeRoman';
+  try {
+    const res = await api('buildWhatsAppMessage', clientId, serverType);
+    if (!res || !res.phone) { toast('Client ka phone number nahi mila', 'warning'); return; }
+    const url = res.text
+      ? 'https://wa.me/' + res.phone + '?text=' + encodeURIComponent(res.text)
+      : 'https://wa.me/' + res.phone;
+    window.open(url, '_blank');
+    toast('WhatsApp khul raha hai...', 'success', 1800);
+  } catch (err) { toast('WhatsApp error: ' + err.message, 'error'); }
+}
+
+/* ============================================================
+   SECTION 63.0 — ADD CLIENT
+   ============================================================ */
+async function submitAddClient(event) {
+  event.preventDefault();
+  const form = event.target;
+  const data = getFormData(form);
+  if (!data.name || !data.phone) { toast('Name aur Phone zaroori hain', 'warning'); return; }
+  const btn = form.querySelector('button[type="submit"]');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner spinner-inline"></span> Saving...';
+  try {
+    const res = await api('addClient', data);
+    toast('Client add ho gaya: ' + res.clientId, 'success');
+    resetAddForm();
+    setTimeout(function () { navigate('client', res.clientId); }, 600);
+  } catch (err) { toast('Add fail: ' + err.message, 'error'); }
+  finally { btn.disabled = false; btn.innerHTML = orig; }
+}
+function resetAddForm() {
+  const form = document.getElementById('addClientForm');
+  if (form) form.reset();
+  const status = form && form.querySelector('[name="status"]');
+  if (status) status.value = 'Active';
+  const deal = form && form.querySelector('[name="dealType"]');
+  if (deal) deal.value = 'Not Set';
+  const unit = form && form.querySelector('[name="areaUnit"]');
+  if (unit) unit.value = 'sqft';
+}
+
+/* ============================================================
+   SECTION 64.0 — CLIENT DETAIL
+   ============================================================ */
+async function loadClientDetail(clientId) {
+  showLoading('servicesList', 'Client load ho raha hai...');
+  try {
+    const client = await api('getClientById', clientId);
+    STATE.currentClient = client;
+    renderClientDetail(client);
+  } catch (err) { toast('Client load nahi hua: ' + err.message, 'error'); navigate('dashboard'); }
+}
+function renderClientDetail(c) {
+  setText('detailName', c.name || '—');
+  setText('detailPhone', c.phone || '—');
+  setText('detailId', c.clientId || '—');
+
+  const statusBadge = document.getElementById('detailStatusBadge');
+  if (statusBadge) {
+    statusBadge.innerHTML = '<span class="badge ' + (c.status === 'Active' ? 'badge-active' : 'badge-inactive') + '">' + escapeHtml(c.status) + '</span>';
+  }
+  const dealBadgeEl = document.getElementById('detailDealBadge');
+  if (dealBadgeEl) {
+    const parts = [];
+    if (c.dealType && c.dealType !== 'Not Set') {
+      const cls = ({Rent:'deal-rent', Sale:'deal-sale', Both:'deal-both'})[c.dealType] || 'deal-notset';
+      parts.push('<span class="deal-badge ' + cls + '">' + escapeHtml(c.dealType) + '</span>');
+    }
+    if (c.areaSize && parseFloat(c.areaSize) > 0) {
+      parts.push('<span class="deal-badge" style="background:#e0f2fe;color:#075985;"><i class="bi bi-rulers"></i> ' +
+                 escapeHtml(String(c.areaSize)) + ' ' + escapeHtml(c.areaUnit || 'sqft') + '</span>');
+    }
+    dealBadgeEl.innerHTML = parts.join(' ');
+  }
+
+  const form = document.getElementById('editClientForm');
+  if (form) {
+    form.querySelector('[name="name"]').value = c.name || '';
+    form.querySelector('[name="phone"]').value = c.phone || '';
+    form.querySelector('[name="email"]').value = c.email || '';
+    form.querySelector('[name="area"]').value = c.area || '';
+    form.querySelector('[name="areaSize"]').value = (c.areaSize && parseFloat(c.areaSize) > 0) ? c.areaSize : '';
+    form.querySelector('[name="areaUnit"]').value = c.areaUnit || 'sqft';
+    form.querySelector('[name="requirement"]').value = c.requirement || '';
+    form.querySelector('[name="dealType"]').value = c.dealType || 'Not Set';
+    form.querySelector('[name="status"]').value = c.status || 'Active';
+  }
+  const editBtn = document.getElementById('editSubmitBtn');
+  if (editBtn) editBtn.style.display = hasPermission('update') ? 'inline-flex' : 'none';
+  const delBtn = document.getElementById('detailDeleteBtn');
+  if (delBtn) delBtn.style.display = hasPermission('delete') ? 'inline-flex' : 'none';
+
+  const svcForm = document.getElementById('addServiceForm');
+  if (svcForm) {
+    svcForm.style.display = hasPermission('service_add') ? 'block' : 'none';
+    svcForm.reset();
+    const svcDate = svcForm.querySelector('[name="serviceDate"]');
+    if (svcDate) svcDate.value = new Date().toISOString().split('T')[0];
+    // Re-apply i18n placeholders after reset
+    applyTranslations();
+  }
+  renderServicesList(c.services || []);
+}
+function renderServicesList(services) {
+  const container = document.getElementById('servicesList');
+  if (!container) return;
+  if (!services || services.length === 0) {
+    container.innerHTML =
+      '<div class="empty-state"><i class="bi bi-briefcase"></i>' +
+      '<h3>' + t('empty.noServices') + '</h3><p>' + t('empty.noServicesHint') + '</p></div>';
+    return;
+  }
+  const sorted = services.slice().sort((a, b) => new Date(b.serviceDate) - new Date(a.serviceDate));
+  const canDel = hasPermission('service_delete');
+  container.innerHTML = sorted.map(function (s) {
+    const delBtn = canDel
+      ? '<button class="btn btn-outline btn-sm btn-icon" onclick="deleteServiceConfirm(\'' + escapeHtml(s.serviceId) + '\')"><i class="bi bi-trash"></i></button>'
+      : '';
+    return '<div class="service-item"><div class="service-info">' +
+      '<div class="service-title">' + escapeHtml(s.serviceDetail) + '</div>' +
+      '<div class="service-meta">' +
+        (s.location ? '<span><i class="bi bi-geo-alt"></i> ' + escapeHtml(s.location) + '</span>' : '') +
+        '<span><i class="bi bi-calendar"></i> ' + fmtDate(s.serviceDate) + '</span>' +
+        '<span><i class="bi bi-hash"></i> ' + escapeHtml(s.serviceId) + '</span>' +
+        (s.createdBy ? '<span><i class="bi bi-person"></i> ' + escapeHtml(s.createdBy) + '</span>' : '') +
+      '</div>' +
+      (s.notes ? '<div class="service-notes">"' + escapeHtml(s.notes) + '"</div>' : '') +
+      '</div>' + delBtn + '</div>';
+  }).join('');
+}
+async function submitEditClient(event) {
+  event.preventDefault();
+  if (!STATE.currentClient) return;
+  const data = getFormData(event.target);
+  const btn = event.target.querySelector('button[type="submit"]');
+  const orig = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner spinner-inline"></span> Saving...';
+  try {
+    await api('updateClient', STATE.currentClient.clientId, data);
+    toast('Details update ho gayi', 'success');
+    await loadClientDetail(STATE.currentClient.clientId);
+  } catch (err) { toast('Update fail: ' + err.message, 'error'); }
+  finally { btn.disabled = false; btn.innerHTML = orig; }
+}
+async function submitAddService(event) {
+  event.preventDefault();
+  if (!STATE.currentClient) return;
+  const data = getFormData(event.target);
+  if (!data.serviceDetail) { toast('Service detail zaroori hai', 'warning'); return; }
+  const btn = event.target.querySelector('button[type="submit"]');
+  const orig = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner spinner-inline"></span> Adding...';
+  try {
+    await api('addService', STATE.currentClient.clientId, data);
+    toast('Service add ho gayi', 'success');
+    await loadClientDetail(STATE.currentClient.clientId);
+  } catch (err) { toast('Service add fail: ' + err.message, 'error'); }
+  finally { btn.disabled = false; btn.innerHTML = orig; }
+}
+async function deleteServiceConfirm(serviceId) {
+  const ok = await showConfirm('Delete Service', 'Yeh service delete karni hai?', 'Delete');
+  if (!ok) return;
+  try {
+    await api('deleteService', serviceId);
+    toast('Service delete ho gayi', 'success');
+    await loadClientDetail(STATE.currentClient.clientId);
+  } catch (err) { toast('Delete fail: ' + err.message, 'error'); }
+}
+async function confirmDeleteClient() {
+  if (!STATE.currentClient) return;
+  const ok = await showConfirm('Delete Client', 'Yeh client delete karna hai?\n\n' + STATE.currentClient.name, 'Delete');
+  if (!ok) return;
+  try {
+    await api('deleteClient', STATE.currentClient.clientId);
+    toast('Client delete ho gaya', 'success');
+    navigate('dashboard');
+  } catch (err) { toast('Delete fail: ' + err.message, 'error'); }
+}
+
+/* ============================================================
+   SECTION 65.0 — GLOBAL SEARCH (v2.1 — range + unit)
+   ============================================================ */
+function initSearchPage() {
+  const results = document.getElementById('searchResults');
+  if (results && results.querySelector('.client-list')) return;
+  performSearch();
+}
+let _searchTimer = null;
+function performSearch() {
+  if (_searchTimer) clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(async function () {
+    const filters = {
+      name:        (document.getElementById('searchName') || {}).value || '',
+      phone:       (document.getElementById('searchPhone') || {}).value || '',
+      area:        (document.getElementById('searchArea') || {}).value || '',
+      requirement: (document.getElementById('searchRequirement') || {}).value || '',
+      dealType:    (document.getElementById('searchDealType') || {}).value || 'All',
+      status:      (document.getElementById('searchStatus') || {}).value || 'All',
+      areaUnit:    (document.getElementById('searchAreaUnit') || {}).value || 'All',
+      areaMin:     (document.getElementById('searchAreaMin') || {}).value || '',
+      areaMax:     (document.getElementById('searchAreaMax') || {}).value || ''
+    };
+    const container = document.getElementById('searchResults');
+    if (container) container.innerHTML = '<div class="loading"><div class="spinner"></div>' + t('msg.searching') + '</div>';
+    try {
+      const res = await api('searchClients', filters);
+      renderSearchResults(res.results || []);
+      setText('searchResultsCount', res.count || 0);
+    } catch (err) {
+      setText('searchResultsCount', 0);
+      if (container) container.innerHTML =
+        '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h3>Error</h3><p>' + escapeHtml(err.message) + '</p></div>';
+    }
+  }, 300);
+}
+function clearSearch() {
+  ['searchName','searchPhone','searchArea','searchRequirement','searchAreaMin','searchAreaMax'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const deal = document.getElementById('searchDealType'); if (deal) deal.value = 'All';
+  const status = document.getElementById('searchStatus'); if (status) status.value = 'All';
+  const unit = document.getElementById('searchAreaUnit'); if (unit) unit.value = 'All';
+  performSearch();
+}
+function renderSearchResults(list) {
+  const container = document.getElementById('searchResults');
+  if (!container) return;
+  if (!list || list.length === 0) {
+    container.innerHTML =
+      '<div class="empty-state"><i class="bi bi-search"></i><h3>' + t('empty.noResults') + '</h3>' +
+      '<p>' + t('empty.noResultsHint') + '</p></div>';
+    return;
+  }
+  container.innerHTML = list.map(clientRowHtml).join('');
+}
+
+/* ============================================================
+   SECTION 66.0 — SETTINGS
+   ============================================================ */
+async function loadSettings() {
+  try {
+    const s = await api('getSettings');
+    STATE.settings = s;
+    STATE.uiLanguage = s.uiLanguage === 'english' ? 'english' : 'roman';
+    setVal('setCompanyName', s.companyName);
+    setVal('setTagline', s.tagline);
+    setVal('setLogoUrl', s.logoUrl);
+    setVal('setPrimaryPhone', s.primaryPhone);
+    setVal('setSecondaryPhone', s.secondaryPhone);
+    setVal('setEmail', s.email);
+    setVal('setWebsite', s.website);
+    setVal('setOfficeAddress', s.officeAddress);
+    setVal('setWelcomeTemplateRoman',    s.welcomeTemplateRoman    || s.welcomeTemplate || '');
+    setVal('setWelcomeTemplateEnglish',  s.welcomeTemplateEnglish  || '');
+    setVal('setReminderTemplateRoman',   s.reminderTemplateRoman   || s.reminderTemplate || '');
+    setVal('setReminderTemplateEnglish', s.reminderTemplateEnglish || '');
+    setVal('setUiLanguage', s.uiLanguage || 'roman');
+    setVal('setCountryCode', s.countryCode);
+    setVal('setDateFormat', s.dateFormat);
+    setVal('setSessionHours', s.sessionHours);
+    setVal('setMaxLoginAttempts', s.maxLoginAttempts);
+    applyPublicBranding(s);
+    applyTranslations();
+  } catch (err) { toast('Settings load fail: ' + err.message, 'error'); }
+}
+
+async function saveSettings() {
+  const payload = {
+    companyName: getVal('setCompanyName'), tagline: getVal('setTagline'),
+    logoUrl: getVal('setLogoUrl'), primaryPhone: getVal('setPrimaryPhone'),
+    secondaryPhone: getVal('setSecondaryPhone'), email: getVal('setEmail'),
+    website: getVal('setWebsite'), officeAddress: getVal('setOfficeAddress'),
+    welcomeTemplateRoman: getVal('setWelcomeTemplateRoman'),
+    welcomeTemplateEnglish: getVal('setWelcomeTemplateEnglish'),
+    reminderTemplateRoman: getVal('setReminderTemplateRoman'),
+    reminderTemplateEnglish: getVal('setReminderTemplateEnglish'),
+    uiLanguage: getVal('setUiLanguage'),
+    countryCode: getVal('setCountryCode'), dateFormat: getVal('setDateFormat'),
+    sessionHours: getVal('setSessionHours'), maxLoginAttempts: getVal('setMaxLoginAttempts')
+  };
+  try {
+    await api('updateSettings', payload);
+    STATE.uiLanguage = payload.uiLanguage === 'english' ? 'english' : 'roman';
+    applyTranslations();
+    toast('Settings save ho gayi', 'success');
+    applyPublicBranding(payload);
+  } catch (err) { toast('Save fail: ' + err.message, 'error'); }
+}
+
+async function confirmResetSettings() {
+  const ok = await showConfirm('Reset Settings', 'Saari settings default par reset ho jayengi. Confirm?', 'Reset');
+  if (!ok) return;
+  try {
+    await api('resetSettings');
+    toast('Settings reset ho gayi', 'success');
+    await loadSettings();
+  } catch (err) { toast('Reset fail: ' + err.message, 'error'); }
+}
+
+// v2.1 — Language toggle immediate feedback (before save)
+function onUiLanguageChange(val) {
+  STATE.uiLanguage = val === 'english' ? 'english' : 'roman';
+  applyTranslations();
+}
+
+/* ============================================================
+   SECTION 67.0 — USER MANAGEMENT
+   ============================================================ */
+async function loadUsers() {
+  const container = document.getElementById('usersList');
+  if (container) container.innerHTML = '<div class="loading"><div class="spinner"></div>' + t('msg.loadingUsers') + '</div>';
+  try {
+    const users = await api('getAllUsers');
+    renderUsersList(users || []);
+  } catch (err) {
+    if (container) container.innerHTML =
+      '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h3>Error</h3><p>' + escapeHtml(err.message) + '</p></div>';
+  }
+}
+function renderUsersList(users) {
+  const container = document.getElementById('usersList');
+  if (!container) return;
+  if (!users || users.length === 0) {
+    container.innerHTML = '<div class="empty-state"><i class="bi bi-people"></i><h3>Koi user nahi</h3></div>';
+    return;
+  }
+  container.innerHTML = users.map(function (u) {
+    const initials = (u.displayName || u.username).split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    const roleClass = u.role === 'Admin' ? 'badge-admin' : (u.role === 'Custom' ? 'badge-custom' : 'badge-normal');
+    const activeBadge = u.isActive ? '<span class="badge badge-active">Active</span>' : '<span class="badge badge-inactive">Inactive</span>';
+    const isSelf = STATE.user && STATE.user.username === u.username;
+    const isAdmin = u.role === 'Admin';
+    let actions = '';
+    if (!isSelf && !isAdmin) {
+      actions =
+        '<button class="btn btn-outline btn-sm" onclick="resetUserPassword(\'' + escapeHtml(u.username) + '\')"><i class="bi bi-key"></i></button>' +
+        '<button class="btn btn-outline btn-sm" onclick="toggleUserActive(\'' + escapeHtml(u.username) + '\')"><i class="bi bi-' + (u.isActive ? 'pause-circle' : 'play-circle') + '"></i></button>' +
+        '<button class="btn btn-danger btn-sm" onclick="deleteUserConfirm(\'' + escapeHtml(u.username) + '\')"><i class="bi bi-trash"></i></button>';
+    } else if (isSelf) { actions = '<span style="font-size:11px;color:var(--muted);font-style:italic;">(You)</span>'; }
+    else if (isAdmin) { actions = '<span style="font-size:11px;color:var(--muted);font-style:italic;">Protected</span>'; }
+    return '<div class="user-row"><div class="user-info">' +
+      '<div class="user-avatar">' + escapeHtml(initials) + '</div>' +
+      '<div class="user-details"><div class="user-name">' + escapeHtml(u.displayName || u.username) + '</div>' +
+      '<div class="user-meta"><span>@' + escapeHtml(u.username) + '</span>' +
+      '<span class="badge ' + roleClass + '">' + escapeHtml(u.role) + '</span>' + activeBadge +
+      (u.lastLogin ? '<span>Last: ' + escapeHtml(u.lastLogin) + '</span>' : '') +
+      '</div></div></div><div class="user-actions">' + actions + '</div></div>';
+  }).join('');
+}
+async function submitAddUser(event) {
+  event.preventDefault();
+  const form = event.target;
+  const data = getFormData(form);
+  if (!data.username || !data.password) { toast('Username aur password zaroori hain', 'warning'); return; }
+  const btn = form.querySelector('button[type="submit"]');
+  const orig = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner spinner-inline"></span> Creating...';
+  try {
+    const res = await api('addUser', data);
+    toast('User ban gaya: ' + res.username, 'success');
+    resetAddUserForm();
+    await loadUsers();
+  } catch (err) { toast('Add fail: ' + err.message, 'error'); }
+  finally { btn.disabled = false; btn.innerHTML = orig; }
+}
+function resetAddUserForm() {
+  const form = document.getElementById('addUserForm');
+  if (form) { form.reset(); const role = form.querySelector('[name="role"]'); if (role) role.value = 'Normal'; }
+}
+async function toggleUserActive(username) {
+  try {
+    const res = await api('toggleUserActive', username);
+    toast(username + ' → ' + (res.isActive ? 'Active' : 'Inactive'), 'success');
+    await loadUsers();
+  } catch (err) { toast('Toggle fail: ' + err.message, 'error'); }
+}
+async function resetUserPassword(username) {
+  const newPass = prompt('Naya password (min 4 chars) for ' + username + ':');
+  if (!newPass) return;
+  if (newPass.length < 4) { toast('Password 4+ chars ka hona chahiye', 'warning'); return; }
+  try { await api('resetUserPassword', username, newPass); toast('Password reset ho gaya', 'success'); }
+  catch (err) { toast('Reset fail: ' + err.message, 'error'); }
+}
+async function deleteUserConfirm(username) {
+  const ok = await showConfirm('Delete User', 'User "' + username + '" ko delete karna hai?', 'Delete');
+  if (!ok) return;
+  try { await api('deleteUser', username); toast('User delete ho gaya', 'success'); await loadUsers(); }
+  catch (err) { toast('Delete fail: ' + err.message, 'error'); }
+}
+
+/* ============================================================
+   SECTION 68.0 — HELP
+   ============================================================ */
+function toggleFaq(el) { if (el) el.classList.toggle('open'); }
+
+/* ============================================================
+   SECTION 69.0 — INIT
+   ============================================================ */
+(function init() {
+  console.log('🚀 NJK Client Manager v2.1.0 — Loaded');
+
+  window.addEventListener('hashchange', handleRoute);
+
+  api('getPublicSettings')
+    .then(function (s) { STATE.publicSettings = s; applyPublicBranding(s); })
+    .catch(function (err) { console.warn('Public settings fail:', err.message); });
+
+  // v2.1 — Load uiLanguage from settings before showing app
+  api('getSettings')
+    .then(function (s) {
+      STATE.settings = s;
+      STATE.uiLanguage = s.uiLanguage === 'english' ? 'english' : 'roman';
+      applyTranslations();
+    })
+    .catch(function (err) { console.warn('Settings preload fail:', err.message); });
+
+  tryAutoLogin();
+})();
+</script>

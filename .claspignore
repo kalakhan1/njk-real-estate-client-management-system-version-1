@@ -1,0 +1,65 @@
+# ============================================================
+# Files to EXCLUDE from clasp push
+# (Apps Script only needs .gs and .html files)
+# ============================================================
+
+# Documentation
+**/README.md
+**/*.md
+**/docs/**
+**/CHANGELOG.md
+**/LICENSE
+**/LICENSE.txt
+
+# Node.js
+**/node_modules/**
+**/package.json
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+
+# Git
+**/.git/**
+**/.gitignore
+**/.gitattributes
+
+# clasp config
+**/.clasp.json
+**/.clasprc.json
+**/.claspignore
+
+# Environment
+**/.env
+**/.env.*
+**/.env.local
+
+# IDE / Editor
+**/.vscode/**
+**/.idea/**
+**/*.swp
+**/*.swo
+**/.editorconfig
+
+# OS Files
+**/.DS_Store
+**/Thumbs.db
+**/Desktop.ini
+
+# Build / Dist
+**/dist/**
+**/build/**
+**/out/**
+
+# Logs
+**/*.log
+
+# Tests / CI (if any)
+**/tests/**
+**/.github/**
+**/.gitlab-ci.yml
+
+# Temporary
+**/*.tmp
+**/*.bak
+**/*.old
+**/.cache/**
