@@ -1,11 +1,11 @@
-# Herbal Master Factory — Client Manager
+# NJK Real Estate — Client Management System
 
-A comprehensive Google Apps Script web application for managing clients, services, communications, and team users. Built as a single-page application (SPA) with Google Sheets as the backend database.
+A comprehensive Google Apps Script web application for managing real estate clients, services, communications, and team users. Built as a single-page application (SPA) with Google Sheets as the backend database.
 
 **Version:** 2.1.1  
 **Platform:** Google Apps Script  
 **Database:** Google Sheets  
-**Author:** Herbal Master Factory
+**Client:** NJK Real Estate
 
 ---
 
@@ -84,7 +84,7 @@ npm install -g @google/clasp
 ## 📁 Project Structure
 
 ```
-herbal-master-factory-gas/
+njk-realestate-cms/
 │
 ├── Backend (.gs → .js after clone)
 │   ├── Config.gs              # Constants, headers, default settings
@@ -156,8 +156,8 @@ clasp login --status
 ### Step 4 — Create Local Folder
 
 ```bash
-mkdir herbal-master-factory-gas
-cd herbal-master-factory-gas
+mkdir njk-realestate-cms
+cd njk-realestate-cms
 ```
 
 ### Step 5 — Clone
@@ -200,8 +200,8 @@ If you want to set up this project on a new machine using the GitHub repository:
 ### Step 1 — Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/herbal-master-factory-gas.git
-cd herbal-master-factory-gas
+git clone https://github.com/YOUR_GITHUB_USERNAME/njk-realestate-cms.git
+cd njk-realestate-cms
 ```
 
 ### Step 2 — Install Dependencies
@@ -255,7 +255,7 @@ Complete workflow to deploy this project as a **brand new** Apps Script project 
 ### Step 1 — Create a New Google Sheet
 
 1. Go to [sheets.new](https://sheets.new)
-2. Rename: **`Herbal Master Factory — Database`**
+2. Rename: **`NJK Real Estate — Database`**
 3. Copy the **Sheet ID** from the URL:
    ```
    https://docs.google.com/spreadsheets/d/SHEET_ID_HERE/edit
@@ -268,13 +268,13 @@ Complete workflow to deploy this project as a **brand new** Apps Script project 
 1. Open your new Sheet
 2. Go to **Extensions → Apps Script**
 3. A new bound script project opens
-4. Rename it: **`Herbal Master Factory`**
+4. Rename it: **`NJK Real Estate CMS`**
 5. Copy the **Script ID** from **⚙️ Project Settings**
 
 **Method B — Via clasp:**
 
 ```bash
-clasp create --title "Herbal Master Factory" --type sheets --parentId "YOUR_SHEET_ID"
+clasp create --title "NJK Real Estate CMS" --type sheets --parentId "YOUR_SHEET_ID"
 ```
 
 ### Step 3 — Configure `.clasp.json`
@@ -421,14 +421,14 @@ Thumbs.db
 
 ```bash
 git add .
-git commit -m "Initial commit: Herbal Master Factory Client Manager v2.1.1"
+git commit -m "Initial commit: NJK Real Estate Client Management System v2.1.1"
 ```
 
 ### Step 4 — Create GitHub Repository
 
 1. Go to [github.com/new](https://github.com/new)
-2. **Repository name:** `herbal-master-factory-gas`
-3. **Description:** Google Apps Script Client Manager for Herbal Master Factory
+2. **Repository name:** `njk-realestate-cms`
+3. **Description:** Google Apps Script Client Management System for NJK Real Estate
 4. Choose **Public** or **Private**
 5. **Do NOT** initialize with README / .gitignore / license
 6. Click **Create repository**
@@ -436,13 +436,13 @@ git commit -m "Initial commit: Herbal Master Factory Client Manager v2.1.1"
 ### Step 5 — Connect Local to Remote
 
 ```bash
-git remote add origin https://github.com/YOUR_GITHUB_USERNAME/herbal-master-factory-gas.git
+git remote add origin https://github.com/YOUR_GITHUB_USERNAME/njk-realestate-cms.git
 git push -u origin main
 ```
 
 ### Step 6 — Verify
 
-Open: `https://github.com/YOUR_GITHUB_USERNAME/herbal-master-factory-gas`
+Open: `https://github.com/YOUR_GITHUB_USERNAME/njk-realestate-cms`
 
 You should see all files **except** `.clasprc.json`, `.clasp.json`, and `node_modules/`.
 
@@ -533,18 +533,18 @@ clasp logs --json       # JSON format
 
 ### Folder Name With Spaces
 
-If your folder has spaces (`herbal-master-factory gas`), either:
+If your folder has spaces, either:
 
 **Option A — Rename:**
 ```bash
 cd ..
-mv "herbal-master-factory gas" herbal-master-factory-gas
-cd herbal-master-factory-gas
+mv "njk realestate cms" njk-realestate-cms
+cd njk-realestate-cms
 ```
 
 **Option B — Use quotes in all commands:**
 ```bash
-cd "herbal-master-factory gas"
+cd "njk realestate cms"
 ```
 
 ### OneDrive Issues
@@ -553,8 +553,8 @@ If you see `EBUSY`, `EPERM`, or sync errors, move the project outside OneDrive:
 
 ```bash
 mkdir C:\Projects
-mv "C:\Users\sktpa\OneDrive\Desktop\herbal-master-factory gas" "C:\Projects\herbal-master-factory-gas"
-cd C:\Projects\herbal-master-factory-gas
+mv "C:\Users\sktpa\OneDrive\Desktop\njk realestate cms" "C:\Projects\njk-realestate-cms"
+cd C:\Projects\njk-realestate-cms
 ```
 
 ---
@@ -605,7 +605,7 @@ Thumbs.db
 
 ## 🤝 Contributing
 
-This is a private project. For internal development:
+This is a private project for NJK Real Estate. For internal development:
 
 1. Create a feature branch: `git checkout -b feature/your-feature`
 2. Make changes and test with `clasp push` → `clasp open --webapp`
@@ -625,7 +625,7 @@ For issues, questions, or feature requests:
 
 ## 📄 License
 
-**Private** — Herbal Master Factory. All rights reserved.
+**Private** — NJK Real Estate. All rights reserved.
 
 This code is proprietary and confidential. Unauthorized copying, distribution, or modification is strictly prohibited.
 
